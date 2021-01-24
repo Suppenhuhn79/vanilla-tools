@@ -96,7 +96,7 @@ pageSnippets.import = function (templateUrl, callback = null)
 	fileIo.fetchServerFile(templateUrl, _templateLoaded);
 };
 
-pageSnippets.produceFromSnippet = function (snippetName, owner = window, variables = {}
+pageSnippets.produce = function (snippetName, owner = window, variables = {}
 )
 {
 	const nodeType =
@@ -153,53 +153,22 @@ pageSnippets.produceFromSnippet = function (snippetName, owner = window, variabl
 				switch (xmlNode.tagName)
 				{
 				case "dht:call-function":
-					let functionName = xmlNode.getAttribute("name");
-					if (functionName !== null)
-					{
-						if (typeof owner[functionName] === "function")
-						{
-							owner[functionName](node);
-						}
-						else
-						{
-							console.error("\"" + functionName + "\" is not a function of owner object", xmlNode, owner);
-						};
-					};
+					_callFunction(node, xmlNode, owner, variables);
 					break;
 				case "dht:for-each":
 					_forEach(node, xmlNode, owner, variables);
 					break;
 				case "dht:if":
-					let testExpression = _resolveVariables(xmlNode.getAttribute("test"), variables);
-					try
-					{
-						if (eval(testExpression) === true)
-						{
-							let thenNode = xmlNode.getElementsByTagName("dht:then")[0];
-							_appendNodes(node, thenNode, owner, variables);
-						}
-						else
-						{
-							let elseNode = xmlNode.getElementsByTagName("dht:else");
-							if (elseNode.length === 1)
-							{
-								_appendNodes(node, elseNode[0], owner, variables);
-							};
-						};
-					}
-					catch (ex)
-					{
-						throw new EvalError("Cannot evaluate expression \"" + testExpression + "\", " + ex.message);
-					};
+					_if(node, xmlNode, owner, variables);
 					break;
 				case "dht:insert-snippet":
-					node.appendChild(pageSnippets.produceFromSnippet(xmlNode.getAttribute("name"), owner, variables));
+					node.appendChild(pageSnippets.produce(_resolveVariables(xmlNode.getAttribute("name"), variables), owner, variables));
 					break;
 				default:
 					let child = document.createElement(xmlNode.tagName);
 					_addAttributes(child, xmlNode, owner, variables);
 					_appendNodes(child, xmlNode, owner, variables);
-					_execPostRender(child, xmlNode, owner);
+					_execPostProduction(child, xmlNode, owner);
 					node.appendChild(child);
 				};
 				break;
@@ -212,18 +181,33 @@ pageSnippets.produceFromSnippet = function (snippetName, owner = window, variabl
 			};
 		};
 	};
-	function _execPostRender(refNode, xmlNode, owner)
+	function _execPostProduction(refNode, xmlNode, owner)
 	{
-		let postrenderFunction = xmlNode.getAttribute("dht:postrender");
-		if (postrenderFunction !== null)
+		let postProductionFunction = xmlNode.getAttribute("dht:postproduction");
+		if (postProductionFunction !== null)
 		{
-			if (typeof owner[postrenderFunction] === "function")
+			if (typeof owner[postProductionFunction] === "function")
 			{
-				owner[postrenderFunction](refNode);
+				owner[postProductionFunction](refNode);
 			}
 			else
 			{
-				console.error("\"" + postrenderFunction + "\" is not a function of owner object", xmlNode, owner);
+				console.error("\"" + postProductionFunction + "\" is not a function of owner object", xmlNode, owner);
+			};
+		};
+	};
+	function _callFunction(refNode, xmlNode, owner, variables)
+	{
+		let functionName = xmlNode.getAttribute("name");
+		if (functionName !== null)
+		{
+			if (typeof owner[functionName] === "function")
+			{
+				owner[functionName](refNode);
+			}
+			else
+			{
+				console.error("\"" + functionName + "\" is not a function of owner object", xmlNode, owner);
 			};
 		};
 	};
@@ -236,6 +220,30 @@ pageSnippets.produceFromSnippet = function (snippetName, owner = window, variabl
 			_appendNodes(refNode, xmlNode, owner, variables[listKey][i]);
 		};
 	};
+	function _if(refNode, xmlNode, owner, variables)
+	{
+		let testExpression = _resolveVariables(xmlNode.getAttribute("test"), variables);
+		try
+		{
+			if (eval(testExpression) === true)
+			{
+				let thenNode = xmlNode.getElementsByTagName("dht:then")[0];
+				_appendNodes(refNode, thenNode, owner, variables);
+			}
+			else
+			{
+				let elseNode = xmlNode.getElementsByTagName("dht:else");
+				if (elseNode.length === 1)
+				{
+					_appendNodes(refNode, elseNode[0], owner, variables);
+				};
+			};
+		}
+		catch (ex)
+		{
+			throw new EvalError("Cannot evaluate expression \"" + testExpression + "\", " + ex.message);
+		};
+	};
 	if (pageSnippets.snippets[snippetName] === undefined)
 	{
 		throw new Error("Unknown snippet \"" + snippetName + "\".");
@@ -244,11 +252,12 @@ pageSnippets.produceFromSnippet = function (snippetName, owner = window, variabl
 	{
 		let snippet = pageSnippets.snippets[snippetName];
 		let result = document.createElement(snippet.tagName);
+		// console.debug("pageSnippets.produce", snippetName);
 		// console.group(snippetName);
 		// console.log(snippet.outerHTML);
 		_addAttributes(result, snippet, owner, variables);
 		_appendNodes(result, snippet, owner, variables);
-		_execPostRender(result, snippet, owner);
+		_execPostProduction(result, snippet, owner);
 		// console.log(result.outerHTML);
 		// console.groupEnd();
 		return result;
