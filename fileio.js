@@ -23,62 +23,70 @@ fileIo.offerFileToClient = function (filename, data)
 	anchorNode.remove();
 };
 
-fileIo.requestClientFile = function (clickEvent, callback)
+fileIo.requestClientFile = function (clickEvent)
 {
-	let inputNode = document.createElement("input");
-	inputNode.setAttribute("type", "file");
-	inputNode.setAttribute("accept", "text/plain");
-	inputNode.style.display = "none";
-	inputNode.onchange = function (fileEvent)
+	return new Promise((resolve, reject) =>
 	{
-		let fileReader = new FileReader();
-		fileReader.onload = callback;
-		fileReader.readAsText(fileEvent.target.files[0]);
-	};
-	document.body.appendChild(inputNode);
-	inputNode.click();
-	inputNode.remove();
+		let inputNode = document.createElement("input");
+		inputNode.setAttribute("type", "file");
+		inputNode.setAttribute("accept", "text/plain");
+		inputNode.style.display = "none";
+		inputNode.onchange = (fileEvent) =>
+		{
+			let fileReader = new FileReader();
+			fileReader.onload = (evt) => resolve(evt);
+			fileReader.readAsText(fileEvent.target.files[0]);
+		};
+		document.body.appendChild(inputNode);
+		inputNode.click();
+		inputNode.remove();
+	}
+	);
 };
 
-fileIo.fetchServerFile = function (url, callback, autoRecognizeDataType = true)
+fileIo.fetchServerFile = function (url, autoRecognizeDataType = true)
 {
-	let httpRequest = new XMLHttpRequest();
-	httpRequest.open("GET", url);
-	httpRequest.onloadend = function (httpEvent)
+	return new Promise((resolve, reject) =>
 	{
-		let result = httpEvent.target.responseText;
-		let error = null;
-		if (httpEvent.target.status !== 200)
+		let httpRequest = new XMLHttpRequest();
+		httpRequest.open("GET", url);
+		httpRequest.onloadend = (httpEvent) =>
 		{
-			error = new ReferenceError("Getting \"" + url + "\" returned HTTP status code " + httpEvent.target.status);
-		}
-		else
-		{
-			if (autoRecognizeDataType === true)
+			let result = httpEvent.target.responseText;
+			let error = null;
+			if (httpEvent.target.status !== 200)
 			{
-				try
+				reject(new ReferenceError("Getting \"" + url + "\" returned HTTP status code " + httpEvent.target.status));
+			}
+			else
+			{
+				if (autoRecognizeDataType === true)
 				{
-					let fileExt = /\.([^.]+)$/.exec(url.toLowerCase());
-					if (fileExt !== null)
+					try
 					{
-						switch (fileExt[1])
+						let fileExt = /\.([^.]+)$/.exec(url.toLowerCase());
+						if (fileExt !== null)
 						{
-						case "json":
-							result = JSON.parse(result);
-							break;
-						case "xml":
-							result = new DOMParser().parseFromString(result, "text/xml");
-							break;
+							switch (fileExt[1])
+							{
+							case "json":
+								result = JSON.parse(result);
+								break;
+							case "xml":
+								result = new DOMParser().parseFromString(result, "text/xml");
+								break;
+							};
 						};
-					};
-				}
-				catch (ex)
-				{
-					error = new SyntaxError(ex.message);
-				}
+					}
+					catch (ex)
+					{
+						reject(new SyntaxError(ex.message));
+					}
+				};
 			};
+			resolve(result);
 		};
-		callback(url, result, error);
-	};
-	httpRequest.send();
+		httpRequest.send();
+	}
+	);
 };

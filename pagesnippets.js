@@ -9,91 +9,95 @@ var pageSnippets = {};
 
 pageSnippets.snippets = {};
 
-pageSnippets.import = function (templateUrl, callback = null)
+pageSnippets.import = function (templateUrl)
 {
-	let templateRoot = "";
-	function _cleanPath(path)
+	return new Promise((resolve, reject) =>
 	{
-		let result = path.replace(/[^/]+\/\.\.\//g, "");
-		return result;
-	};
-	function _templateLoaded(url, xmlDocument)
-	{
-		function _collectSinppets()
+		let templateRoot = "";
+		function _cleanPath(path)
 		{
-			let snippetCollection = xmlDocument.getElementsByTagName("dht:snippet");
-			for (let s = 0, ss = snippetCollection.length; s < ss; s += 1)
-			{
-				pageSnippets.snippets[snippetCollection[s].getAttribute("name")] = snippetCollection[s].firstElementChild;
-				if (snippetCollection[s].childElementCount > 1)
-				{
-					console.warn("Importing pageSnippets from \"" + url + "\": a snippet must have only one child element.", snippetCollection[s]);
-				};
-			};
+			let result = path.replace(/[^/]+\/\.\.\//g, "");
+			return result;
 		};
-		function _includeStylesheets()
+		function _templateLoaded(xmlDocument)
 		{
-			let stylesheetsCollection = xmlDocument.getElementsByTagName("dht:stylesheet");
-			for (let s = 0, ss = stylesheetsCollection.length; s < ss; s += 1)
+			function _collectSinppets()
 			{
-				let styleNode = document.createElement("link");
-				let src = _cleanPath(templateRoot.concat(stylesheetsCollection[s].getAttribute("src")));
-				if (document.querySelector("link[rel=\"stylesheet\"][href=\"" + src + "\"]") === null)
+				let snippetCollection = xmlDocument.getElementsByTagName("dht:snippet");
+				for (let s = 0, ss = snippetCollection.length; s < ss; s += 1)
 				{
-					styleNode.setAttribute("rel", "stylesheet");
-					styleNode.setAttribute("href", src);
-					document.head.appendChild(styleNode);
+					pageSnippets.snippets[snippetCollection[s].getAttribute("name")] = snippetCollection[s].firstElementChild;
+					if (snippetCollection[s].childElementCount > 1)
+					{
+						console.warn("Importing pageSnippets from \"" + url + "\": a snippet must have only one child element.", snippetCollection[s]);
+					};
 				};
 			};
-		};
-		function _includeScripts()
-		{
-			let scriptEvents = {};
-			function __onScriptLoadend(loadEvent)
+			function _includeStylesheets()
 			{
-				scriptsToLoad -= 1;
-				let scriptRef = loadEvent.target.getAttribute("src");
-				let functionName = scriptEvents[scriptRef];
-				if (functionName !== null)
+				let stylesheetsCollection = xmlDocument.getElementsByTagName("dht:stylesheet");
+				for (let s = 0, ss = stylesheetsCollection.length; s < ss; s += 1)
 				{
-					window[functionName]();
-				};
-				if ((scriptsToLoad === 0) && (typeof callback === "function"))
-				{
-					callback();
+					let styleNode = document.createElement("link");
+					let src = _cleanPath(templateRoot.concat(stylesheetsCollection[s].getAttribute("src")));
+					if (document.querySelector("link[rel=\"stylesheet\"][href=\"" + src + "\"]") === null)
+					{
+						styleNode.setAttribute("rel", "stylesheet");
+						styleNode.setAttribute("href", src);
+						document.head.appendChild(styleNode);
+					};
 				};
 			};
-			let scriptsCollection = xmlDocument.getElementsByTagName("dht:script");
-			let newScriptsCount = 0;
-			for (let s = 0, ss = scriptsCollection.length; s < ss; s += 1)
+			function _includeScripts()
 			{
-				let src = _cleanPath(templateRoot.concat(scriptsCollection[s].getAttribute("src")));
-				if (document.querySelector("script[src=\"" + src + "\"]") === null)
-				{
-					newScriptsCount += 1;
-					let scriptNode = document.createElement("script");
-					scriptNode.setAttribute("src", src);
-					scriptEvents[src] = scriptsCollection[s].getAttribute("onloadend");
-					scriptNode.addEventListener("load", __onScriptLoadend, false);
-					document.head.appendChild(scriptNode);
-				}
-				else
+				let scriptEvents = {};
+				let scriptsToLoad = xmlDocument.getElementsByTagName("dht:script").length;
+				function __onScriptLoadend(loadEvent)
 				{
 					scriptsToLoad -= 1;
+					let scriptRef = loadEvent.target.getAttribute("src");
+					let functionName = scriptEvents[scriptRef];
+					if (functionName !== null)
+					{
+						window[functionName]();
+					};
+					if (scriptsToLoad === 0)
+					{
+						resolve();
+					};
+				};
+				let scriptsCollection = xmlDocument.getElementsByTagName("dht:script");
+				let newScriptsCount = 0;
+				for (let s = 0, ss = scriptsCollection.length; s < ss; s += 1)
+				{
+					let src = _cleanPath(templateRoot.concat(scriptsCollection[s].getAttribute("src")));
+					if (document.querySelector("script[src=\"" + src + "\"]") === null)
+					{
+						newScriptsCount += 1;
+						let scriptNode = document.createElement("script");
+						scriptNode.setAttribute("src", src);
+						scriptEvents[src] = scriptsCollection[s].getAttribute("onloadend");
+						scriptNode.addEventListener("load", __onScriptLoadend, false);
+						document.head.appendChild(scriptNode);
+					}
+					else
+					{
+						scriptsToLoad -= 1;
+					};
+				};
+				if ((scriptsCollection.length === 0) || (newScriptsCount === 0))
+				{
+					resolve();
 				};
 			};
-			if ((scriptsCollection.length === 0) || (newScriptsCount === 0))
-			{
-				callback();
-			};
+			_collectSinppets();
+			_includeStylesheets();
+			_includeScripts();
 		};
-		let scriptsToLoad = xmlDocument.getElementsByTagName("dht:script").length;
-		_collectSinppets();
-		_includeStylesheets();
-		_includeScripts();
-	};
-	templateRoot = templateUrl.replace(/[^./]+\.[\S]+$/, "");
-	fileIo.fetchServerFile(templateUrl, _templateLoaded);
+		templateRoot = templateUrl.replace(/[^./]+\.[\S]+$/, "");
+		fileIo.fetchServerFile(templateUrl).then(_templateLoaded, (arg) => reject(new Error(arg)));
+	}
+	);
 };
 
 pageSnippets.produce = function (snippetName, owner = window, variables = {}
