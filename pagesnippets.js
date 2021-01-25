@@ -250,7 +250,7 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 	};
 	if (pageSnippets.snippets[snippetName] === undefined)
 	{
-		throw new Error("Unknown snippet \"" + snippetName + "\".");
+		throw new ReferenceError("Unknown snippet \"" + snippetName + "\".");
 	}
 	else
 	{
