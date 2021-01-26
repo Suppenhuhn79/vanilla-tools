@@ -44,19 +44,20 @@ fileIo.requestClientFile = function (clickEvent)
 	);
 };
 
-fileIo.fetchServerFile = function (url, autoRecognizeDataType = true)
+fileIo.fetchServerFile = function (url, autoRecognizeDataType = true, forceReload = true)
 {
 	return new Promise((resolve, reject) =>
 	{
 		let httpRequest = new XMLHttpRequest();
-		httpRequest.open("GET", url);
+		httpRequest.open("GET", (forceReload === true) ? url + "?" + Date().toString().replace(/[^a-z0-9]/gi, "") : url);
 		httpRequest.onloadend = (httpEvent) =>
 		{
 			let result = httpEvent.target.responseText;
 			let error = null;
 			if (httpEvent.target.status !== 200)
 			{
-				reject(new ReferenceError("Getting \"" + url + "\" returned HTTP status code " + httpEvent.target.status));
+				let surl = (url.includes("?") === true) ? url.substr(0, url.indexOf("?")) : url;
+				reject(new ReferenceError("Getting \"" + surl + "\" returned HTTP status code " + httpEvent.target.status));
 			}
 			else
 			{
