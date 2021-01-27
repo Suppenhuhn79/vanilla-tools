@@ -1,8 +1,9 @@
 "use strict";
 
 /*
-Copyright 2021 Christoph Zager - https://github.com/Suppenhuhn79/vanilla-tools
-Licensed under the Apache License, Version 2.0 - http://www.apache.org/licenses/LICENSE-2.0
+This is a file from Vanilla-Tools (https://github.com/suppenhuhn79/vanilla-tools)
+Copyright 2021 Christoph Zager, licensed under the Apache License, Version 2.0
+See the full license text at http://www.apache.org/licenses/LICENSE-2.0
  */
 
 class Menubox
@@ -57,7 +58,7 @@ class Menubox
 		document.body.appendChild(this.htmlElement);
 	};
 
-	static HideAll()
+	static hideAll()
 	{
 		let allMenuboxes = document.querySelectorAll("[data-menubox]");
 		for (let i = 0, ii = allMenuboxes.length; i < ii; i += 1)
@@ -66,7 +67,7 @@ class Menubox
 		};
 	};
 
-	static OnMenuItemClick(clickEvent)
+	static onMenuItemClick(clickEvent)
 	{
 		let menuNode = clickEvent.target.closest("[data-menubox]");
 		let menuEvent = new CustomEvent("menubox",

@@ -1,11 +1,14 @@
 "use strict";
 
 /*
-Copyright 2021 Christoph Zager - https://github.com/Suppenhuhn79/vanilla-tools
-Licensed under the Apache License, Version 2.0 - http://www.apache.org/licenses/LICENSE-2.0
+This is a file from Vanilla-Tools (https://github.com/suppenhuhn79/vanilla-tools)
+Copyright 2021 Christoph Zager, licensed under the Apache License, Version 2.0
+See the full license text at http://www.apache.org/licenses/LICENSE-2.0
  */
 
 var fileIo = {};
+
+fileIo.fetchForceReload = true;
 
 fileIo.offerFileToClient = function (filename, data)
 {
@@ -44,12 +47,12 @@ fileIo.requestClientFile = function (clickEvent)
 	);
 };
 
-fileIo.fetchServerFile = function (url, autoRecognizeDataType = true, forceReload = true)
+fileIo.fetchServerFile = function (url, autoRecognizeDataType = true)
 {
 	return new Promise((resolve, reject) =>
 	{
 		let httpRequest = new XMLHttpRequest();
-		httpRequest.open("GET", (forceReload === true) ? url + "?" + Date().toString().replace(/[^a-z0-9]/gi, "") : url);
+		httpRequest.open("GET", (fileIo.fetchForceReload === true) ? url + "?" + Date().toString().replace(/[^a-z0-9]/gi, "") : url);
 		httpRequest.onloadend = (httpEvent) =>
 		{
 			let result = httpEvent.target.responseText;
