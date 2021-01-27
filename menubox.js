@@ -20,7 +20,7 @@ class Menubox
 				let buttonNode = document.createElement("div");
 				buttonNode.setAttribute("data-menubutton", menuButton.key);
 				buttonNode.innerHTML = menuButton.text;
-				buttonNode.onclick = Menubox.OnMenuItemClick;
+				buttonNode.onclick = Menubox.onMenuItemClick;
 				buttonsContainerNode.appendChild(buttonNode);
 			};
 			menubox.htmlElement.appendChild(buttonsContainerNode);
@@ -154,7 +154,7 @@ class Menubox
 					itemNode.classList.add("selected");
 				};
 				itemNode.innerHTML = menuItem.text;
-				itemNode.onclick = Menubox.OnMenuItemClick;
+				itemNode.onclick = Menubox.onMenuItemClick;
 				if (typeof menuItem.postrender === "function")
 				{
 					menuItem.postrender(itemNode);
@@ -201,7 +201,7 @@ class Menubox
 
 	popupAt(topPosition, leftPosition, context = null, clickEvent = null)
 	{
-		Menubox.HideAll();
+		Menubox.hideAll();
 		if (clickEvent instanceof Event)
 		{
 			clickEvent.stopPropagation();
@@ -214,4 +214,4 @@ class Menubox
 
 };
 
-window.addEventListener("click", Menubox.HideAll);
+window.addEventListener("click", Menubox.hideAll);
