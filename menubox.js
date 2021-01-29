@@ -93,6 +93,7 @@ class Menubox
 				menuEvent.detail.selectedKeys.push(selectedItems[i].getAttribute("data-menuitem"));
 			};
 			window.dispatchEvent(new CustomEvent("menubox", menuEvent));
+			Menubox.hideAll();
 		}
 		else
 		{
@@ -105,6 +106,7 @@ class Menubox
 			{
 				menuEvent.detail["itemKey"] = clickEvent.target.getAttribute("data-menuitem");
 				window.dispatchEvent(new CustomEvent("menubox", menuEvent));
+				Menubox.hideAll();
 			};
 		};
 	};
@@ -218,4 +220,11 @@ class Menubox
 
 };
 
-window.addEventListener("click", Menubox.hideAll);
+window.addEventListener("click", (clickEvent) =>
+{
+	if (clickEvent.target.closest("[data-menubox]") === null)
+	{
+		Menubox.hideAll();
+	}
+}
+);
