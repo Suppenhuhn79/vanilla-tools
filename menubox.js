@@ -34,7 +34,11 @@ class Menubox
 		this.htmlElement.style.visibility = "hidden";
 		if (menuJson["class"] !== undefined)
 		{
-			this.htmlElement.classList.add(menuJson["class"]);
+			let classes = menuJson["class"].split(" ");
+			for (let c = 0, cc = classes.length; c < cc; c += 1)
+			{
+				this.htmlElement.classList.add(classes[c]);
+			};
 		};
 		if (menuJson.multiselect === true)
 		{
@@ -83,7 +87,7 @@ class Menubox
 		{
 			menuEvent.detail["buttonKey"] = clickEvent.target.getAttribute("data-menubutton");
 			menuEvent.detail["selectedKeys"] = [];
-			let selectedItems = menuNode.querySelectorAll(".selected");
+			let selectedItems = menuNode.querySelectorAll("[data-menuitem].selected");
 			for (let i = 0, ii = selectedItems.length; i < ii; i += 1)
 			{
 				menuEvent.detail.selectedKeys.push(selectedItems[i].getAttribute("data-menuitem"));
@@ -172,7 +176,7 @@ class Menubox
 
 	selectItem(itemKey, beSelected = true)
 	{
-		if (this.multiselect !== true)
+		if (this.htmlElement.getAttribute("data-multiselect") !== "yes")
 		{
 			let items = this.htmlElement.querySelectorAll("[data-menuitem]");
 			for (let i = 0, ii = items.length; i < ii; i += 1)
