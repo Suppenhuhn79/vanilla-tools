@@ -28,7 +28,7 @@ class Menubox
 		this.id = id;
 		this.htmlElement = document.createElement("div");
 		this.htmlElement.setAttribute("data-menubox", id);
-		this.htmlElement.style.position = "absolute";
+		this.htmlElement.style.position = (menuJson.position !== undefined) ? menuJson.position : "absolute";
 		this.htmlElement.style.top = 0;
 		this.htmlElement.style.left = 0;
 		this.htmlElement.style.visibility = "hidden";
