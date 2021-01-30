@@ -28,13 +28,17 @@ class Menubox
 		this.id = id;
 		this.htmlElement = document.createElement("div");
 		this.htmlElement.setAttribute("data-menubox", id);
-		this.htmlElement.style.position = "absolute";
+		this.htmlElement.style.position = (menuJson.position !== undefined) ? menuJson.position : "absolute";
 		this.htmlElement.style.top = 0;
 		this.htmlElement.style.left = 0;
 		this.htmlElement.style.visibility = "hidden";
 		if (menuJson["class"] !== undefined)
 		{
-			this.htmlElement.classList.add(menuJson["class"]);
+			let classes = menuJson["class"].split(" ");
+			for (let c = 0, cc = classes.length; c < cc; c += 1)
+			{
+				this.htmlElement.classList.add(classes[c]);
+			};
 		};
 		if (menuJson.multiselect === true)
 		{
@@ -83,12 +87,13 @@ class Menubox
 		{
 			menuEvent.detail["buttonKey"] = clickEvent.target.getAttribute("data-menubutton");
 			menuEvent.detail["selectedKeys"] = [];
-			let selectedItems = menuNode.querySelectorAll(".selected");
+			let selectedItems = menuNode.querySelectorAll("[data-menuitem].selected");
 			for (let i = 0, ii = selectedItems.length; i < ii; i += 1)
 			{
 				menuEvent.detail.selectedKeys.push(selectedItems[i].getAttribute("data-menuitem"));
 			};
 			window.dispatchEvent(new CustomEvent("menubox", menuEvent));
+			Menubox.hideAll();
 		}
 		else
 		{
@@ -101,6 +106,7 @@ class Menubox
 			{
 				menuEvent.detail["itemKey"] = clickEvent.target.getAttribute("data-menuitem");
 				window.dispatchEvent(new CustomEvent("menubox", menuEvent));
+				Menubox.hideAll();
 			};
 		};
 	};
@@ -172,7 +178,7 @@ class Menubox
 
 	selectItem(itemKey, beSelected = true)
 	{
-		if (this.multiselect !== true)
+		if (this.htmlElement.getAttribute("data-multiselect") !== "yes")
 		{
 			let items = this.htmlElement.querySelectorAll("[data-menuitem]");
 			for (let i = 0, ii = items.length; i < ii; i += 1)
@@ -214,4 +220,11 @@ class Menubox
 
 };
 
-window.addEventListener("click", Menubox.hideAll);
+window.addEventListener("click", (clickEvent) =>
+{
+	if (clickEvent.target.closest("[data-menubox]") === null)
+	{
+		Menubox.hideAll();
+	}
+}
+);
