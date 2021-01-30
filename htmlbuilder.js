@@ -8,6 +8,37 @@ See the full license text at http://www.apache.org/licenses/LICENSE-2.0
 
 let htmlBuilder = {};
 
+htmlBuilder.newNode = function (nodeDefinition, attributes = {})
+{
+	let htmlTag = /^[^#.\s]+/.exec(nodeDefinition)[0];
+	let result = document.createElement(htmlTag);
+	let idDefinition = /#([^.\s]+)/.exec(nodeDefinition);
+	if (idDefinition !== null)
+	{
+		result.id = idDefinition[1];
+	};
+	let cssClassesRex = /\.([^.\s]+)/g;
+	let cssClassMatch = cssClassesRex.exec(nodeDefinition);
+	while (cssClassMatch !== null)
+	{
+		result.classList.add(cssClassMatch[1]);
+		cssClassMatch = cssClassesRex.exec(nodeDefinition);
+	};
+	for (let attributeKey in attributes)
+	{
+		if (attributeKey.startsWith("data-") === true)
+		{
+			result.setAttribute(attributeKey, attributes[attributeKey]);
+		}
+		else
+		{
+			result[attributeKey] = attributes[attributeKey];
+		};
+	};
+	return result;
+};
+
+
 htmlBuilder.removeNodesByQuerySelectors = function (querySelectors, rootNode = document)
 {
 	for (let s = 0, ss = querySelectors.length; s < ss; s += 1)
