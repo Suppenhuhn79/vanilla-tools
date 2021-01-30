@@ -158,13 +158,13 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 				switch (xmlNode.tagName)
 				{
 				case "dht:call-function":
-					_callFunction(node, xmlNode, owner, variables);
+					__callFunction(node, xmlNode, owner, variables);
 					break;
 				case "dht:for-each":
-					_forEach(node, xmlNode, owner, variables);
+					__forEach(node, xmlNode, owner, variables);
 					break;
 				case "dht:if":
-					_if(node, xmlNode, owner, variables);
+					__if(node, xmlNode, owner, variables);
 					break;
 				case "dht:insert-snippet":
 					node.appendChild(pageSnippets.produce(_resolveVariables(xmlNode.getAttribute("name"), variables), owner, variables));
@@ -201,7 +201,7 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 			};
 		};
 	};
-	function _callFunction(refNode, xmlNode, owner, variables)
+	function __callFunction(refNode, xmlNode, owner, variables)
 	{
 		let functionName = xmlNode.getAttribute("name");
 		if (functionName !== null)
@@ -216,18 +216,27 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 			};
 		};
 	};
-	function _forEach(refNode, xmlNode, owner, variables)
+	function __forEach(refNode, xmlNode, owner, variables)
 	{
 		let listKey = xmlNode.getAttribute("list");
-		// console.debug("_forEach()", refNode.outerHTML, xmlNode, xmlNode.firstElementChild, variables[listKey]);
+		// console.debug("__forEach()", refNode.outerHTML, xmlNode, xmlNode.firstElementChild, variables[listKey]);
 		for (let i = 0, ii = variables[listKey].length; i < ii; i += 1)
 		{
 			_appendNodes(refNode, xmlNode, owner, variables[listKey][i]);
 		};
 	};
-	function _if(refNode, xmlNode, owner, variables)
+	function __if(refNode, xmlNode, owner, variables)
 	{
 		let testExpression = _resolveVariables(xmlNode.getAttribute("test"), variables);
+		/* escape string delimiters*/
+		let testOperators = /('(.*)')?[\s=!<>]+('(.*)')?/.exec(testExpression);
+		for (let r of[2, 4])
+		{
+			if (testOperators[r] !== undefined)
+			{
+				testExpression = testExpression.replace(testOperators[r], testOperators[r].replace("'", "\\"));
+			};
+		};
 		try
 		{
 			if (eval(testExpression) === true)
