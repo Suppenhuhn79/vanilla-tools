@@ -8,6 +8,38 @@ See the full license text at http://www.apache.org/licenses/LICENSE-2.0
 
 let htmlBuilder = {};
 
+htmlBuilder.adjust = function (element, anchorElement, adjustment = "below bottom, start left")
+{
+	/* initial position: "start left, top below" */
+	let position =
+	{
+		"x": a.offsetLeft,
+		"y": a.offsetTop
+	};
+	/* vertical adjustment */
+	position.y += (/\bbottom\b/i.exec(adjustment) !== null) ? anchorElement.clientHeight : 0;
+	position.y -= (/\babove\b/i.exec(adjustment) !== null) ? element.clientHeight : 0;
+	position.y += (/\bmiddle\b/i.exec(adjustment) !== null) ? ((anchorElement.clientHeight - element.clientHeight) / 2) : 0;
+	/* horizontal adjustment */
+	position.x += (/\bright\b/i.exec(adjustment) !== null) ? anchorElement.clientWidth : 0;
+	position.x -= (/\bend\b/i.exec(adjustment) !== null) ? element.clientWidth : 0;
+	position.x += (/\bcenter\b/i.exec(adjustment) !== null) ? ((anchorElement.clientWidth - element.clientWidth) / 2) : 0;
+	/* prevent exceeding the docment client area */
+	let exceedings =
+	{
+		"x": document.documentElement.offsetWidth - position.x - element.clientWidth,
+		"y": document.documentElement.offsetHeight - position.y - element.clientHeight
+	};
+	position.x += (exceedings.x < 0) ? exceedings.x : 0;
+	position.y += (exceedings.y < 0) ? exceedings.y : 0;
+	/* prevent positions < 0 */
+	position.y = (position.y < 0) ? 0 : position.y;
+	position.x = (position.x < 0) ? 0 : position.x;
+	/* set position */
+	v.style.top = Math.round(position.y) + "px";
+	v.style.left = Math.round(position.x) + "px";
+};
+
 htmlBuilder.newNode = function (nodeDefinition, attributes = {})
 {
 	let htmlTag = /^[^#.\s]+/.exec(nodeDefinition)[0];
