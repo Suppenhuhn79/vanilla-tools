@@ -6,6 +6,10 @@ Copyright 2021 Christoph Zager, licensed under the Apache License, Version 2.0
 See the full license text at http://www.apache.org/licenses/LICENSE-2.0
  */
 
+/*
+requires htmlbuilder.js
+ */
+
 class Menubox
 {
 	constructor(id, menuJson)
@@ -17,20 +21,24 @@ class Menubox
 			for (let b = 0, bb = menuButtonsJson.length; b < bb; b += 1)
 			{
 				let menuButton = menuButtonsJson[b];
-				let buttonNode = document.createElement("div");
-				buttonNode.setAttribute("data-menubutton", menuButton.key);
-				buttonNode.innerHTML = menuButton.text;
-				buttonNode.onclick = Menubox.onMenuItemClick;
+				let buttonNode = htmlBuilder.newElement("div",
+				{
+					"data-menubutton": menuButton.key,
+					"innerHTML": menuButton.text,
+					"onclick": Menubox.onMenuItemClick
+				}
+					);
 				buttonsContainerNode.appendChild(buttonNode);
 			};
 			menubox.htmlElement.appendChild(buttonsContainerNode);
 		};
 		this.id = id;
-		this.htmlElement = document.createElement("div");
-		this.htmlElement.setAttribute("data-menubox", id);
+		this.htmlElement = htmlBuilder.newElement("div",
+		{
+			"data-menubox": id
+		}
+			);
 		this.htmlElement.style.position = (menuJson.position !== undefined) ? menuJson.position : "absolute";
-		this.htmlElement.style.top = 0;
-		this.htmlElement.style.left = 0;
 		this.htmlElement.style.visibility = "hidden";
 		if (menuJson["class"] !== undefined)
 		{
@@ -46,13 +54,14 @@ class Menubox
 		};
 		if (menuJson.title !== undefined)
 		{
-			let menuTitle = document.createElement("div");
-			menuTitle.classList.add("title");
-			menuTitle.innerHTML = menuJson.title;
+			let menuTitle = htmlBuilder.newElement("div.title",
+			{
+				"innerHTML": menuJson.title
+			}
+				);
 			this.htmlElement.appendChild(menuTitle);
 		};
-		let itemsContainerNode = document.createElement("div");
-		itemsContainerNode.classList.add("items");
+		let itemsContainerNode = htmlBuilder.newElement("div.items");
 		this.htmlElement.appendChild(itemsContainerNode);
 		this.buildMenuItems(menuJson);
 		if ((menuJson.buttons !== undefined) && (menuJson.buttons.constructor === Array))
@@ -200,22 +209,21 @@ class Menubox
 		};
 	};
 
-	popup(clickEvent, context = null)
-	{
-		this.popupAt(clickEvent.clientY + document.documentElement.scrollTop, clickEvent.clientX + document.documentElement.scrollLeft, context, clickEvent);
-	};
-
-	popupAt(topPosition, leftPosition, context = null, clickEvent = null)
+	popup(clickEvent, context = null, anchorElement, adjustment = "start left, below bottom")
 	{
 		Menubox.hideAll();
 		if (clickEvent instanceof Event)
 		{
 			clickEvent.stopPropagation();
+			this.htmlElement.style.top = clickEvent.clientY + document.documentElement.scrollTop + "px";
+			this.htmlElement.style.left = clickEvent.clientX + document.documentElement.scrollLeft + "px";
 		};
-		this.htmlElement.style.top = topPosition + "px";
-		this.htmlElement.style.left = leftPosition + "px";
-		this.htmlElement.style.visibility = "visible";
 		this.htmlElement.setAttribute("data-context", context);
+		if (anchorElement instanceof HTMLElement)
+		{
+			htmlBuilder.adjust(this.htmlElement, anchorElement, adjustment);
+		}
+		this.htmlElement.style.visibility = "visible";
 	};
 
 };
