@@ -16,8 +16,7 @@ class Menubox
 	{
 		function _createMenuButtons(menuButtonsJson, menubox)
 		{
-			let buttonsContainerNode = document.createElement("div");
-			buttonsContainerNode.classList.add("buttons");
+			let buttonsContainerNode = htmlBuilder.newElement("div.buttons");
 			for (let b = 0, bb = menuButtonsJson.length; b < bb; b += 1)
 			{
 				let menuButton = menuButtonsJson[b];
@@ -30,27 +29,29 @@ class Menubox
 					);
 				buttonsContainerNode.appendChild(buttonNode);
 			};
-			menubox.htmlElement.appendChild(buttonsContainerNode);
+			menubox.element.appendChild(buttonsContainerNode);
 		};
 		this.id = id;
-		this.htmlElement = htmlBuilder.newElement("div",
+		this.element = htmlBuilder.newElement("div",
 		{
 			"data-menubox": id
 		}
 			);
-		this.htmlElement.style.position = (menuJson.position !== undefined) ? menuJson.position : "absolute";
-		this.htmlElement.style.visibility = "hidden";
+		this.element.style.position = (menuJson.position !== undefined) ? menuJson.position : "absolute";
+		this.element.style.top = "0px";
+		this.element.style.left = "0px";
+		this.element.style.visibility = "hidden";
 		if (menuJson["class"] !== undefined)
 		{
 			let classes = menuJson["class"].split(" ");
 			for (let c = 0, cc = classes.length; c < cc; c += 1)
 			{
-				this.htmlElement.classList.add(classes[c]);
+				this.element.classList.add(classes[c]);
 			};
 		};
 		if (menuJson.multiselect === true)
 		{
-			this.htmlElement.setAttribute("data-multiselect", "yes");
+			this.element.setAttribute("data-multiselect", "yes");
 		};
 		if (menuJson.title !== undefined)
 		{
@@ -59,16 +60,16 @@ class Menubox
 				"innerHTML": menuJson.title
 			}
 				);
-			this.htmlElement.appendChild(menuTitle);
+			this.element.appendChild(menuTitle);
 		};
 		let itemsContainerNode = htmlBuilder.newElement("div.items");
-		this.htmlElement.appendChild(itemsContainerNode);
+		this.element.appendChild(itemsContainerNode);
 		this.buildMenuItems(menuJson);
 		if ((menuJson.buttons !== undefined) && (menuJson.buttons.constructor === Array))
 		{
 			_createMenuButtons(menuJson.buttons, this);
 		};
-		document.body.appendChild(this.htmlElement);
+		document.body.appendChild(this.element);
 	};
 
 	static hideAll()
@@ -182,20 +183,20 @@ class Menubox
 			};
 			itemsContainerNode.appendChild(itemNode);
 		};
-		this.htmlElement.replaceChild(itemsContainerNode, this.htmlElement.querySelector("div.items"));
+		this.element.replaceChild(itemsContainerNode, this.element.querySelector("div.items"));
 	};
 
 	selectItem(itemKey, beSelected = true)
 	{
-		if (this.htmlElement.getAttribute("data-multiselect") !== "yes")
+		if (this.element.getAttribute("data-multiselect") !== "yes")
 		{
-			let items = this.htmlElement.querySelectorAll("[data-menuitem]");
+			let items = this.element.querySelectorAll("[data-menuitem]");
 			for (let i = 0, ii = items.length; i < ii; i += 1)
 			{
 				items[i].classList.remove("selected");
 			};
 		};
-		let selectedItem = this.htmlElement.querySelector("[data-menuitem=\"" + itemKey + "\"]");
+		let selectedItem = this.element.querySelector("[data-menuitem=\"" + itemKey + "\"]");
 		if (selectedItem !== null)
 		{
 			if (beSelected === true)
@@ -215,15 +216,15 @@ class Menubox
 		if (clickEvent instanceof Event)
 		{
 			clickEvent.stopPropagation();
-			this.htmlElement.style.top = clickEvent.clientY + document.documentElement.scrollTop + "px";
-			this.htmlElement.style.left = clickEvent.clientX + document.documentElement.scrollLeft + "px";
+			this.element.style.top = clickEvent.clientY + document.documentElement.scrollTop + "px";
+			this.element.style.left = clickEvent.clientX + document.documentElement.scrollLeft + "px";
 		};
-		this.htmlElement.setAttribute("data-context", context);
+		this.element.setAttribute("data-context", context);
 		if (anchorElement instanceof HTMLElement)
 		{
-			htmlBuilder.adjust(this.htmlElement, anchorElement, adjustment);
+			htmlBuilder.adjust(this.element, anchorElement, adjustment);
 		}
-		this.htmlElement.style.visibility = "visible";
+		this.element.style.visibility = "visible";
 	};
 
 };
