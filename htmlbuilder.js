@@ -13,28 +13,34 @@ htmlBuilder.adjust = function (element, anchorElement, adjustment = "below botto
 	/* initial position: "start left, top below" */
 	let anchorRect =	anchorElement.getBoundingClientRect();
 	let position = {};
-	/* vertical adjustment */
-	position["y"] = (/\bbottom\b/i.exec(adjustment) !== null) ? anchorRect.bottom : anchorRect.top;
-	position.y -= (/\babove\b/i.exec(adjustment) !== null) ? element.offsetHeight : 0;
-	position.y += (/\bmiddle\b/i.exec(adjustment) !== null) ? ((anchorRect.height - element.offsetHeight) / 2) : 0;
+	let elementPositionIsFixed = (window.getComputedStyle(element).position === "fixed");
 	/* horizontal adjustment */
 	position["x"] = (/\bright\b/i.exec(adjustment) !== null) ? anchorRect.right : anchorRect.left;
 	position.x -= (/\bend\b/i.exec(adjustment) !== null) ? element.offsetWidth : 0;
 	position.x += (/\bcenter\b/i.exec(adjustment) !== null) ? ((anchorRect.width - element.offsetWidth) / 2) : 0;
+	/* vertical adjustment */
+	position["y"] = (/\bbottom\b/i.exec(adjustment) !== null) ? anchorRect.bottom : anchorRect.top;
+	position.y -= (/\babove\b/i.exec(adjustment) !== null) ? element.offsetHeight : 0;
+	position.y += (/\bmiddle\b/i.exec(adjustment) !== null) ? ((anchorRect.height - element.offsetHeight) / 2) : 0;
 	/* prevent exceeding the docment client area */
-	let exceedings =
-	{
-		"x": document.documentElement.offsetWidth - position.x - element.offsetWidth,
-		"y": document.documentElement.offsetHeight - position.y - element.offsetHeight
-	};
+	/* document.body.clientWidth for x, because window.innerWidth does not exclude a scrollbar; we expect a document not be wider than the window */
+	let exceedings = {};
+	exceedings["x"] = ((elementPositionIsFixed === true) ? document.body.clientWidth : document.documentElement.offsetWidth) - position.x - element.offsetWidth;
+	exceedings["y"] = ((elementPositionIsFixed === true) ? window.innerHeight : document.documentElement.offsetHeight) - position.y - element.offsetHeight;
 	position.x += (exceedings.x < 0) ? exceedings.x : 0;
 	position.y += (exceedings.y < 0) ? exceedings.y : 0;
 	/* prevent positions < 0 */
 	position.y = (position.y < 0) ? 0 : position.y;
 	position.x = (position.x < 0) ? 0 : position.x;
+	/* rescpect scroll position for non-fixed elements */
+	if (elementPositionIsFixed === false)
+	{
+		position.y += document.documentElement.scrollTop;
+		position.x += document.documentElement.scrollLeft;
+	};
 	/* set position */
-	element.style.top = Math.round(document.documentElement.scrollTop + position.y) + "px";
-	element.style.left = Math.round(document.documentElement.scrollLeft + position.x) + "px";
+	element.style.top = Math.round(position.y) + "px";
+	element.style.left = Math.round(position.x) + "px";
 };
 
 htmlBuilder.newElement = function (nodeDefinition, attributes = {})
