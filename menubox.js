@@ -69,6 +69,8 @@ class Menubox
 		{
 			_createMenuButtons(menuJson.buttons, this);
 		};
+		let existingMenu = document.querySelector("[data-menubox=\"" + id + "\"]");
+		(existingMenu !== null) ? existingMenu.remove():null;
 		document.body.appendChild(this.element);
 	};
 
