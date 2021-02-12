@@ -11,7 +11,7 @@ let htmlBuilder = {};
 htmlBuilder.adjust = function (element, anchorElement, adjustment = "below bottom, start left")
 {
 	/* initial position: "start left, top below" */
-	let anchorRect =	anchorElement.getBoundingClientRect();
+	let anchorRect = anchorElement.getBoundingClientRect();
 	let position = {};
 	let elementPositionIsFixed = (window.getComputedStyle(element).position === "fixed");
 	/* horizontal adjustment */
@@ -27,11 +27,11 @@ htmlBuilder.adjust = function (element, anchorElement, adjustment = "below botto
 	let exceedings = {};
 	exceedings["x"] = ((elementPositionIsFixed === true) ? document.body.clientWidth : document.documentElement.offsetWidth) - position.x - element.offsetWidth;
 	exceedings["y"] = ((elementPositionIsFixed === true) ? window.innerHeight : document.documentElement.offsetHeight) - position.y - element.offsetHeight;
-	position.x += (exceedings.x < 0) ? exceedings.x : 0;
-	position.y += (exceedings.y < 0) ? exceedings.y : 0;
+	position.x += Math.min(exceedings.x, 0);
+	position.y += Math.min(exceedings.y, 0);
 	/* prevent positions < 0 */
-	position.y = (position.y < 0) ? 0 : position.y;
-	position.x = (position.x < 0) ? 0 : position.x;
+	position.y = Math.max(position.y, 0);
+	position.x = Math.max(position.x, 0);
 	/* rescpect scroll position for non-fixed elements */
 	if (elementPositionIsFixed === false)
 	{
@@ -43,7 +43,8 @@ htmlBuilder.adjust = function (element, anchorElement, adjustment = "below botto
 	element.style.left = Math.round(position.x) + "px";
 };
 
-htmlBuilder.newElement = function (nodeDefinition, attributes = {})
+htmlBuilder.newElement = function (nodeDefinition, attributes = {}
+)
 {
 	let htmlTag = /^[^#.\s]+/.exec(nodeDefinition)[0];
 	let result = document.createElement(htmlTag);
@@ -72,7 +73,6 @@ htmlBuilder.newElement = function (nodeDefinition, attributes = {})
 	};
 	return result;
 };
-
 
 htmlBuilder.removeNodesByQuerySelectors = function (querySelectors, rootNode = document)
 {
