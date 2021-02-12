@@ -10,18 +10,17 @@ var pageSnippets = {};
 
 pageSnippets.snippets = {};
 
-pageSnippets.import = function (templateUrl)
+pageSnippets.import = function (url)
 {
-	return new Promise((resolve, reject) =>
-	{
-		let templateRoot = "";
-		function _cleanPath(path)
+	return new Promise((resolve, reject) => fileIo.fetchServerFile(url).then(
+		(xmlDocument) =>
 		{
-			let result = path.replace(/[^/]+\/\.\.\//g, "");
-			return result;
-		};
-		function _templateLoaded(xmlDocument)
-		{
+			function _cleanPath(path)
+			{
+				let templateRoot = url.replace(/[^./]+\.[\S]+$/, "");
+				let result = templateRoot.concat(path).replace(/[^/]+\/\.\.\//g, "");
+				return result;
+			};
 			function _collectSinppets()
 			{
 				let snippetCollection = xmlDocument.getElementsByTagName("dht:snippet");
@@ -30,7 +29,7 @@ pageSnippets.import = function (templateUrl)
 					pageSnippets.snippets[snippetCollection[s].getAttribute("name")] = snippetCollection[s].firstElementChild;
 					if (snippetCollection[s].childElementCount > 1)
 					{
-						console.warn("Importing pageSnippets from \"" + url + "\": a snippet must have only one child element.", snippetCollection[s]);
+						console.warn("<dht:snippet name=\"" + snippetCollection[s].getAttribute("name") + "\"> must have only one child element.", url);
 					};
 				};
 			};
@@ -40,7 +39,7 @@ pageSnippets.import = function (templateUrl)
 				for (let s = 0, ss = stylesheetsCollection.length; s < ss; s += 1)
 				{
 					let styleNode = document.createElement("link");
-					let src = _cleanPath(templateRoot.concat(stylesheetsCollection[s].getAttribute("src")));
+					let src = _cleanPath(stylesheetsCollection[s].getAttribute("src"));
 					if (document.querySelector("link[rel=\"stylesheet\"][href=\"" + src + "\"]") === null)
 					{
 						styleNode.setAttribute("rel", "stylesheet");
@@ -51,34 +50,28 @@ pageSnippets.import = function (templateUrl)
 			};
 			function _includeScripts()
 			{
-				let scriptEvents = {};
-				let scriptsToLoad = xmlDocument.getElementsByTagName("dht:script").length;
+				let scriptsCollection = xmlDocument.getElementsByTagName("dht:script");
+				let scriptsToLoad = scriptsCollection.length;
 				function __onScriptLoadend(loadEvent)
 				{
-					scriptsToLoad -= 1;
-					let scriptRef = loadEvent.target.getAttribute("src");
-					let functionName = scriptEvents[scriptRef];
-					if (functionName !== null)
+					if (loadEvent.type === "error")
 					{
-						window[functionName]();
+						console.error(new ReferenceError("Error while loading <script> from source \"" + loadEvent.target.src + "\""));
 					};
-					if (scriptsToLoad === 0)
+					if ((scriptsToLoad -= 1) === 0)
 					{
 						resolve();
 					};
 				};
-				let scriptsCollection = xmlDocument.getElementsByTagName("dht:script");
-				let newScriptsCount = 0;
 				for (let s = 0, ss = scriptsCollection.length; s < ss; s += 1)
 				{
-					let src = _cleanPath(templateRoot.concat(scriptsCollection[s].getAttribute("src")));
+					let src = _cleanPath(scriptsCollection[s].getAttribute("src"));
 					if (document.querySelector("script[src=\"" + src + "\"]") === null)
 					{
-						newScriptsCount += 1;
 						let scriptNode = document.createElement("script");
 						scriptNode.setAttribute("src", src);
-						scriptEvents[src] = scriptsCollection[s].getAttribute("onloadend");
-						scriptNode.addEventListener("load", __onScriptLoadend, false);
+						scriptNode.addEventListener("load", __onScriptLoadend);
+						scriptNode.addEventListener("error", __onScriptLoadend);
 						document.head.appendChild(scriptNode);
 					}
 					else
@@ -86,7 +79,7 @@ pageSnippets.import = function (templateUrl)
 						scriptsToLoad -= 1;
 					};
 				};
-				if ((scriptsCollection.length === 0) || (newScriptsCount === 0))
+				if ((scriptsCollection.length === 0) || (scriptsToLoad === 0))
 				{
 					resolve();
 				};
@@ -94,10 +87,8 @@ pageSnippets.import = function (templateUrl)
 			_collectSinppets();
 			_includeStylesheets();
 			_includeScripts();
-		};
-		templateRoot = templateUrl.replace(/[^./]+\.[\S]+$/, "");
-		fileIo.fetchServerFile(templateUrl).then(_templateLoaded, (arg) => reject(new Error(arg)));
-	}
+		},
+		(arg) => reject(new Error(arg)))
 	);
 };
 
@@ -132,7 +123,7 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 			let rexMatch = /^dht:(on[\w]+)/.exec(attr.name);
 			if (rexMatch !== null)
 			{
-				if (owner[attr.value] !== undefined)
+				if (typeof owner[attr.value] === "function")
 				{
 					node[rexMatch[1]] = owner[attr.value].bind(owner);
 				}
