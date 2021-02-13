@@ -20,7 +20,7 @@ class Undoer
 
 	get lastChangeDescription()
 	{
-		return (this.canUndo === true) ? String(this.snapshots[this.snapshots.length - 1].description) : null;
+		return (this.canUndo) ? String(this.snapshots[this.snapshots.length - 1].description) : null;
 	};
 
 	saveSnapshot(data, description)
@@ -39,7 +39,7 @@ class Undoer
 	undo()
 	{
 		let result = null;
-		if (this.canUndo === true)
+		if (this.canUndo)
 		{
 			result = String(this.snapshots[this.snapshots.length - 1].data);
 			this.snapshots.pop();

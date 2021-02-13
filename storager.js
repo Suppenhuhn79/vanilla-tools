@@ -10,7 +10,7 @@ var storager = {};
 
 storager.store = function (key, title, data)
 {
-	if (typeof localStorage !== "undefined")
+	if (!!localStorage)
 	{
 		let storeData =
 		{
@@ -25,11 +25,11 @@ storager.store = function (key, title, data)
 storager.retrieve = function (key)
 {
 	let result = null;
-	if (typeof localStorage !== "undefined")
+	if (!!localStorage)
 	{
 		let storedData = JSON.parse(localStorage.getItem(key));
 		result = storedData;
-		if (storedData !== null)
+		if (!!storedData)
 		{
 			result["date"] = new Date(storedData.date);
 		};

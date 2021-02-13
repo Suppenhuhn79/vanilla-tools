@@ -52,24 +52,24 @@ fileIo.fetchServerFile = function (url, autoRecognizeDataType = true)
 	return new Promise((resolve, reject) =>
 	{
 		let httpRequest = new XMLHttpRequest();
-		httpRequest.open("GET", (fileIo.fetchForceReload === true) ? url + "?" + Date().toString().replace(/[^a-z0-9]/gi, "") : url);
+		httpRequest.open("GET", (fileIo.fetchForceReload) ? url + "?" + Date().toString().replace(/[^a-z0-9]/gi, "") : url);
 		httpRequest.onloadend = (httpEvent) =>
 		{
 			let result = httpEvent.target.responseText;
 			let error = null;
 			if (httpEvent.target.status !== 200)
 			{
-				let surl = (url.includes("?") === true) ? url.substr(0, url.indexOf("?")) : url;
+				let surl = (url.includes("?")) ? url.substr(0, url.indexOf("?")) : url;
 				reject(new ReferenceError("Getting \"" + surl + "\" returned HTTP status code " + httpEvent.target.status));
 			}
 			else
 			{
-				if (autoRecognizeDataType === true)
+				if (autoRecognizeDataType)
 				{
 					try
 					{
 						let fileExt = /\.([^.]+)$/.exec(url.toLowerCase());
-						if (fileExt !== null)
+						if (!!fileExt)
 						{
 							switch (fileExt[1])
 							{

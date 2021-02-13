@@ -37,11 +37,11 @@ class Menubox
 			"data-menubox": id
 		}
 			);
-		this.element.style.position = (menuJson.position !== undefined) ? menuJson.position : "absolute";
+		this.element.style.position = (!!menuJson.position) ? menuJson.position : "absolute";
 		this.element.style.top = "0px";
 		this.element.style.left = "0px";
 		this.element.style.visibility = "hidden";
-		if (menuJson["class"] !== undefined)
+		if (!!menuJson["class"])
 		{
 			let classes = menuJson["class"].split(" ");
 			for (let c = 0, cc = classes.length; c < cc; c += 1)
@@ -53,7 +53,7 @@ class Menubox
 		{
 			this.element.setAttribute("data-multiselect", "yes");
 		};
-		if (menuJson.title !== undefined)
+		if (!!menuJson.title)
 		{
 			let menuTitle = htmlBuilder.newElement("div.title",
 			{
@@ -65,12 +65,12 @@ class Menubox
 		let itemsContainerNode = htmlBuilder.newElement("div.items");
 		this.element.appendChild(itemsContainerNode);
 		this.buildMenuItems(menuJson);
-		if ((menuJson.buttons !== undefined) && (menuJson.buttons.constructor === Array))
+		if ((!!menuJson.buttons) && (menuJson.buttons.constructor === Array))
 		{
 			_createMenuButtons(menuJson.buttons, this);
 		};
 		let existingMenu = document.querySelector("[data-menubox=\"" + id + "\"]");
-		(existingMenu !== null) ? existingMenu.remove():null;
+		(!!existingMenu) ? existingMenu.remove():null;
 		document.body.appendChild(this.element);
 	};
 
@@ -95,7 +95,7 @@ class Menubox
 			}
 		}
 			);
-		if (clickEvent.target.getAttribute("data-menubutton") !== null)
+		if (!!clickEvent.target.getAttribute("data-menubutton"))
 		{
 			menuEvent.detail["buttonKey"] = clickEvent.target.getAttribute("data-menubutton");
 			menuEvent.detail["selectedKeys"] = [];
@@ -130,7 +130,7 @@ class Menubox
 			let result = [];
 			for (let itemKey in menuItems)
 			{
-				if (menuItems[itemKey] !== null)
+				if (!!menuItems[itemKey])
 				{
 					result.push(
 					{
@@ -150,7 +150,7 @@ class Menubox
 			};
 			return result;
 		};
-		if ((menuItems.items !== undefined) && (menuItems.items.constructor === Array))
+		if ((!!menuItems.items) && (menuItems.items.constructor === Array))
 		{
 			menuItems = menuItems.items;
 		}
@@ -167,7 +167,7 @@ class Menubox
 			if (menuItem.separator !== true)
 			{
 				itemNode.setAttribute("data-menuitem", menuItem.key);
-				if (menuItem.selected === true)
+				if (menuItem.selected)
 				{
 					itemNode.classList.add("selected");
 				};
@@ -199,16 +199,9 @@ class Menubox
 			};
 		};
 		let selectedItem = this.element.querySelector("[data-menuitem=\"" + itemKey + "\"]");
-		if (selectedItem !== null)
+		if (!!selectedItem)
 		{
-			if (beSelected === true)
-			{
-				selectedItem.classList.add("selected");
-			}
-			else
-			{
-				selectedItem.classList.remove("selected");
-			};
+			(beSelected) ? selectedItem.classList.add("selected") : selectedItem.classList.remove("selected");
 		};
 	};
 

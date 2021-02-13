@@ -105,9 +105,9 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 		let rex = /\{{2}(\S+)\}{2}/g;
 		let result = text;
 		let rexResult = rex.exec(text);
-		while (rexResult !== null)
+		while (!!rexResult)
 		{
-			if (typeof variables[rexResult[1]] !== "undefined")
+			if (variables[rexResult[1]] !== undefined)
 			{
 				result = result.replace("{{" + rexResult[1] + "}}", variables[rexResult[1]]);
 			};
@@ -121,7 +121,7 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 		{
 			let attr = sourceXml.attributes[a];
 			let rexMatch = /^dht:(on[\w]+)/.exec(attr.name);
-			if (rexMatch !== null)
+			if (!!rexMatch)
 			{
 				if (typeof owner[attr.value] === "function")
 				{
@@ -180,7 +180,7 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 	function _execPostProduction(refNode, xmlNode, owner)
 	{
 		let postProductionFunction = xmlNode.getAttribute("dht:postproduction");
-		if (postProductionFunction !== null)
+		if (!!postProductionFunction)
 		{
 			if (typeof owner[postProductionFunction] === "function")
 			{
@@ -195,7 +195,7 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 	function __callFunction(refNode, xmlNode, owner, variables)
 	{
 		let functionName = xmlNode.getAttribute("name");
-		if (functionName !== null)
+		if (!!functionName)
 		{
 			if (typeof owner[functionName] === "function")
 			{
@@ -223,7 +223,7 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 		let testOperators = /('(.*)')?[\s=!<>]+('(.*)')?/.exec(testExpression);
 		for (let r of[2, 4])
 		{
-			if (testOperators[r] !== undefined)
+			if (!!testOperators[r])
 			{
 				testExpression = testExpression.replace(testOperators[r], testOperators[r].replace("'", "\\"));
 			};

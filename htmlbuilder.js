@@ -15,18 +15,18 @@ htmlBuilder.adjust = function (element, anchorElement, adjustment = "below botto
 	let position = {};
 	let elementPositionIsFixed = (window.getComputedStyle(element).position === "fixed");
 	/* horizontal adjustment */
-	position["x"] = (/\bright\b/i.exec(adjustment) !== null) ? anchorRect.right : anchorRect.left;
-	position.x -= (/\bend\b/i.exec(adjustment) !== null) ? element.offsetWidth : 0;
-	position.x += (/\bcenter\b/i.exec(adjustment) !== null) ? ((anchorRect.width - element.offsetWidth) / 2) : 0;
+	position["x"] = (!!/\bright\b/i.exec(adjustment)) ? anchorRect.right : anchorRect.left;
+	position.x -= (!!/\bend\b/i.exec(adjustment)) ? element.offsetWidth : 0;
+	position.x += (!!/\bcenter\b/i.exec(adjustment)) ? ((anchorRect.width - element.offsetWidth) / 2) : 0;
 	/* vertical adjustment */
-	position["y"] = (/\bbottom\b/i.exec(adjustment) !== null) ? anchorRect.bottom : anchorRect.top;
-	position.y -= (/\babove\b/i.exec(adjustment) !== null) ? element.offsetHeight : 0;
-	position.y += (/\bmiddle\b/i.exec(adjustment) !== null) ? ((anchorRect.height - element.offsetHeight) / 2) : 0;
+	position["y"] = (!!/\bbottom\b/i.exec(adjustment)) ? anchorRect.bottom : anchorRect.top;
+	position.y -= (!!/\babove\b/i.exec(adjustment)) ? element.offsetHeight : 0;
+	position.y += (!!/\bmiddle\b/i.exec(adjustment)) ? ((anchorRect.height - element.offsetHeight) / 2) : 0;
 	/* prevent exceeding the docment client area */
 	/* document.body.clientWidth for x, because window.innerWidth does not exclude a scrollbar; we expect a document not be wider than the window */
 	let exceedings = {};
-	exceedings["x"] = ((elementPositionIsFixed === true) ? document.body.clientWidth : document.documentElement.offsetWidth) - position.x - element.offsetWidth;
-	exceedings["y"] = ((elementPositionIsFixed === true) ? window.innerHeight : document.documentElement.offsetHeight) - position.y - element.offsetHeight;
+	exceedings["x"] = ((elementPositionIsFixed) ? document.body.clientWidth : document.documentElement.offsetWidth) - position.x - element.offsetWidth;
+	exceedings["y"] = ((elementPositionIsFixed) ? window.innerHeight : document.documentElement.offsetHeight) - position.y - element.offsetHeight;
 	position.x += Math.min(exceedings.x, 0);
 	position.y += Math.min(exceedings.y, 0);
 	/* prevent positions < 0 */
@@ -49,20 +49,17 @@ htmlBuilder.newElement = function (nodeDefinition, attributes = {}
 	let htmlTag = /^[^#.\s]+/.exec(nodeDefinition)[0];
 	let result = document.createElement(htmlTag);
 	let idDefinition = /#([^.\s]+)/.exec(nodeDefinition);
-	if (idDefinition !== null)
-	{
-		result.id = idDefinition[1];
-	};
+	result.id = (!!idDefinition) ? idDefinition[1] : "";
 	let cssClassesRex = /\.([^.\s]+)/g;
 	let cssClassMatch = cssClassesRex.exec(nodeDefinition);
-	while (cssClassMatch !== null)
+	while (!!cssClassMatch)
 	{
 		result.classList.add(cssClassMatch[1]);
 		cssClassMatch = cssClassesRex.exec(nodeDefinition);
 	};
 	for (let attributeKey in attributes)
 	{
-		if (attributeKey.startsWith("data-") === true)
+		if (attributeKey.startsWith("data-"))
 		{
 			result.setAttribute(attributeKey, attributes[attributeKey]);
 		}
