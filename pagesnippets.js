@@ -6,14 +6,17 @@ Copyright 2021 Christoph Zager, licensed under the Apache License, Version 2.0
 See the full license text at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-var pageSnippets = {};
+var pageSnippets =
+{
+	"namespace": "http://www.w3.org/1999/xhtml"
+};
 
 pageSnippets.snippets = {};
 
 pageSnippets.import = function (url)
 {
 	return new Promise((resolve, reject) => fileIo.fetchServerFile(url).then(
-		(xmlDocument) =>
+			(xmlDocument) =>
 		{
 			function _cleanPath(path)
 			{
@@ -88,8 +91,7 @@ pageSnippets.import = function (url)
 			_includeStylesheets();
 			_includeScripts();
 		},
-		(arg) => reject(new Error(arg)))
-	);
+			(arg) => reject(new Error(arg))));
 };
 
 pageSnippets.produce = function (snippetName, owner = window, variables = {}
@@ -134,7 +136,7 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 			}
 			else
 			{
-				node.setAttribute(attr.name, _resolveVariables(attr.value, variables));
+				node.setAttributeNS(pageSnippets.namespace, attr.name, _resolveVariables(attr.value, variables));
 			};
 		};
 	};
@@ -161,7 +163,7 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 					node.appendChild(pageSnippets.produce(_resolveVariables(xmlNode.getAttribute("name"), variables), owner, variables));
 					break;
 				default:
-					let child = document.createElement(xmlNode.tagName);
+					let child = document.createElementNS(pageSnippets.namespace, xmlNode.tagName);
 					_addAttributes(child, xmlNode, owner, variables);
 					_appendNodes(child, xmlNode, owner, variables);
 					_execPostProduction(child, xmlNode, owner);
@@ -256,7 +258,7 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 	else
 	{
 		let snippet = pageSnippets.snippets[snippetName];
-		let result = document.createElement(snippet.tagName);
+		let result = document.createElementNS(pageSnippets.namespace, snippet.tagName);
 		// console.debug("pageSnippets.produce", snippetName);
 		// console.group(snippetName);
 		// console.log(snippet.outerHTML);
