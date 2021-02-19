@@ -102,7 +102,7 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 	};
 	function _resolveVariables(text, variables)
 	{
-		let rex = /\{{2}(\S+)\}{2}/g;
+		let rex = /\{{2}([^\}]+)\}{2}/g;
 		let result = text;
 		let rexResult = rex.exec(text);
 		while (!!rexResult)
