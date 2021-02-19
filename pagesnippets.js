@@ -8,10 +8,9 @@ See the full license text at http://www.apache.org/licenses/LICENSE-2.0
 
 var pageSnippets =
 {
-	"namespace": "http://www.w3.org/1999/xhtml"
+	"namespace": null,
+	"snippets": {}
 };
-
-pageSnippets.snippets = {};
 
 pageSnippets.import = function (url)
 {
@@ -136,7 +135,7 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 			}
 			else
 			{
-				node.setAttributeNS(pageSnippets.namespace, attr.name, _resolveVariables(attr.value, variables));
+				(!!pageSnippets.namespace) ? node.setAttributeNS(pageSnippets.namespace, attr.name, _resolveVariables(attr.value, variables)) : node.setAttribute(attr.name, _resolveVariables(attr.value, variables));
 			};
 		};
 	};
@@ -163,7 +162,7 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 					node.appendChild(pageSnippets.produce(_resolveVariables(xmlNode.getAttribute("name"), variables), owner, variables));
 					break;
 				default:
-					let child = document.createElementNS(pageSnippets.namespace, xmlNode.tagName);
+					let child = (!!pageSnippets.namespace) ? document.createElementNS(pageSnippets.namespace, xmlNode.tagName) : document.createElement(xmlNode.tagName);
 					_addAttributes(child, xmlNode, owner, variables);
 					_appendNodes(child, xmlNode, owner, variables);
 					_execPostProduction(child, xmlNode, owner);
@@ -258,14 +257,14 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 	else
 	{
 		let snippet = pageSnippets.snippets[snippetName];
-		let result = document.createElementNS(pageSnippets.namespace, snippet.tagName);
+		// pageSnippets["namespace"] = document.body.namespaceURI;
+		let result = (!!pageSnippets.namespace) ? document.createElementNS(pageSnippets.namespace, snippet.tagName) : document.createElement(snippet.tagName);
 		// console.debug("pageSnippets.produce", snippetName);
 		// console.group(snippetName);
 		// console.log(snippet.outerHTML);
 		_addAttributes(result, snippet, owner, variables);
 		_appendNodes(result, snippet, owner, variables);
 		_execPostProduction(result, snippet, owner);
-		// console.log(result.outerHTML);
 		// console.groupEnd();
 		return result;
 	};
