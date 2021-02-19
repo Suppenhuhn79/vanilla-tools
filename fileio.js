@@ -52,7 +52,7 @@ fileIo.fetchServerFile = function (url, autoRecognizeDataType = true)
 	return new Promise((resolve, reject) =>
 	{
 		let httpRequest = new XMLHttpRequest();
-		httpRequest.open("GET", (fileIo.fetchForceReload) ? url + "?" + Date().toString().replace(/[^a-z0-9]/gi, "") : url);
+		httpRequest.open("GET", (fileIo.fetchForceReload) ? url + "?" + (new Date()).toISOString().replace(/[^a-z0-9]/gi, "") : url);
 		httpRequest.onloadend = (httpEvent) =>
 		{
 			let result = httpEvent.target.responseText;
