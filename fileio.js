@@ -10,13 +10,13 @@ var fileIo = {};
 
 fileIo.fetchForceReload = true;
 
-fileIo.offerFileToClient = function (filename, data)
+fileIo.offerFileToClient = function (filename, data, type = "text/plain")
 {
 	let anchorNode = document.createElement("a");
 	anchorNode.style.display = "none";
 	let file = new Blob([data],
 	{
-		type: "text/plain"
+		"type": type
 	}
 		);
 	anchorNode.href = URL.createObjectURL(file);
