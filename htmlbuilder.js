@@ -57,10 +57,8 @@ htmlBuilder.newElement = function (nodeDefinition, ...params)
 		result.classList.add(cssClassMatch[1]);
 		cssClassMatch = cssClassesRex.exec(nodeDefinition);
 	};
-	console.log(params);
 	for (let param of params)
 	{
-		console.log(param);
 		if (typeof param === "string")
 		{
 			result.innerHTML = param;
