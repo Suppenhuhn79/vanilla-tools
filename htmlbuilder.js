@@ -43,13 +43,13 @@ htmlBuilder.adjust = function (element, anchorElement, adjustment = "below botto
 	element.style.left = Math.round(position.x) + "px";
 };
 
-htmlBuilder.newElement = function (nodeDefinition, attributes = {}
-)
+htmlBuilder.newElement = function (nodeDefinition, ...params)
+ 
 {
 	let htmlTag = /^[^#.\s]+/.exec(nodeDefinition)[0];
 	let result = document.createElement(htmlTag);
 	let idDefinition = /#([^.\s]+)/.exec(nodeDefinition);
-	result.id = (!!idDefinition) ? idDefinition[1] : "";
+	(!!idDefinition) ? result.id = idDefinition[1] : null;
 	let cssClassesRex = /\.([^.\s]+)/g;
 	let cssClassMatch = cssClassesRex.exec(nodeDefinition);
 	while (!!cssClassMatch)
@@ -57,15 +57,31 @@ htmlBuilder.newElement = function (nodeDefinition, attributes = {}
 		result.classList.add(cssClassMatch[1]);
 		cssClassMatch = cssClassesRex.exec(nodeDefinition);
 	};
-	for (let attributeKey in attributes)
+	console.log(params);
+	for (let param of params)
 	{
-		if (attributeKey.startsWith("data-"))
+		console.log(param);
+		if (typeof param === "string")
 		{
-			result.setAttribute(attributeKey, attributes[attributeKey]);
+			result.innerHTML = param;
+		}
+		else if ((typeof param === "object") && (param.constructor === Object))
+		{
+			for (let attributeKey in param)
+			{
+				if (attributeKey.startsWith("data-"))
+				{
+					result.setAttribute(attributeKey, param[attributeKey]);
+				}
+				else
+				{
+					result[attributeKey] = param[attributeKey];
+				};
+			};
 		}
 		else
 		{
-			result[attributeKey] = attributes[attributeKey];
+			throw new TypeError("Expected string or object, got " + (typeof param));
 		};
 	};
 	return result;
