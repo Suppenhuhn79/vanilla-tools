@@ -43,8 +43,7 @@ htmlBuilder.adjust = function (element, anchorElement, adjustment = "below botto
 	element.style.left = Math.round(position.x) + "px";
 };
 
-htmlBuilder.newElement = function (nodeDefinition, ...params)
- 
+htmlBuilder.newElement = function (nodeDefinition, ...attributes)
 {
 	let htmlTag = /^[^#.\s]+/.exec(nodeDefinition)[0];
 	let result = document.createElement(htmlTag);
@@ -57,29 +56,37 @@ htmlBuilder.newElement = function (nodeDefinition, ...params)
 		result.classList.add(cssClassMatch[1]);
 		cssClassMatch = cssClassesRex.exec(nodeDefinition);
 	};
-	for (let param of params)
+	for (let attribute of attributes)
 	{
-		if (typeof param === "string")
+		switch (attribute.constructor.name)
 		{
-			result.innerHTML = param;
-		}
-		else if ((typeof param === "object") && (param.constructor === Object))
-		{
-			for (let attributeKey in param)
+		case "String":
+		case "Number":
+			result.innerHTML = attribute;
+			break;
+		case "Object":
+			for (let key in attribute)
 			{
-				if (attributeKey.startsWith("data-"))
+				let value = attribute[key];
+				if (typeof value === "function")
 				{
-					result.setAttribute(attributeKey, param[attributeKey]);
+					result[key] = value;
 				}
 				else
 				{
-					result[attributeKey] = param[attributeKey];
+					result.setAttribute(key, value);
 				};
 			};
-		}
-		else
-		{
-			throw new TypeError("Expected string or object, got " + (typeof param));
+			break;
+		default:
+			if (attribute instanceof HTMLElement)
+			{
+				result.appendChild(attribute);
+			}
+			else
+			{
+				throw new TypeError("Expected String, Number, Object or HTMLElement, got " + ((!!attribute) ? attribute.constructor.name : typeof attribute));
+			};
 		};
 	};
 	return result;
@@ -107,5 +114,13 @@ htmlBuilder.removeClasses = function (classes, rootNode = document)
 		{
 			nodes[n].classList.remove(classes[c]);
 		};
+	};
+};
+
+htmlBuilder.clear = function (element)
+{
+	while (!!element.firstChild)
+	{
+		element.firstChild.remove();
 	};
 };
