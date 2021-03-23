@@ -101,16 +101,17 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 		"element": 1,
 		"text": 3
 	};
-	function _resolveVariables(text, variables)
+	function _resolveVariables(text, variables, variableTransformer = null)
 	{
 		let rex = /\{{2}([^\}]+)\}{2}/g;
 		let result = text;
 		let rexResult = rex.exec(text);
 		while (!!rexResult)
 		{
-			if (variables[rexResult[1]] !== undefined)
+			let value = variables[rexResult[1]];
+			if (value !== undefined)
 			{
-				result = result.replace("{{" + rexResult[1] + "}}", variables[rexResult[1]]);
+				result = result.replace("{{" + rexResult[1] + "}}", ((typeof variableTransformer === "function") ? variableTransformer(String(value)) : value));
 			};
 			rexResult = rex.exec(text);
 		};
@@ -219,16 +220,7 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 	};
 	function __if(refNode, xmlNode, owner, variables)
 	{
-		let testExpression = _resolveVariables(xmlNode.getAttribute("test"), variables);
-		/* escape string delimiters*/
-		let testOperators = /('(.*)')?[\s=!<>]+('(.*)')?/.exec(testExpression);
-		for (let r of[2, 4])
-		{
-			if (!!testOperators[r])
-			{
-				testExpression = testExpression.replace(testOperators[r], testOperators[r].replace("'", "\\"));
-			};
-		};
+		let testExpression = _resolveVariables(xmlNode.getAttribute("test"), variables, (val) => val.replace("'", "\\"));
 		try
 		{
 			if (eval(testExpression) === true)
