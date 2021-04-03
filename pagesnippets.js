@@ -103,12 +103,12 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 	};
 	function _resolveVariables(text, variables, variableTransformer = null)
 	{
-		let rex = /\{{2}([^\}]+)\}{2}/g;
 		let result = text;
+		let rex = /\{{2}([^\}]*)\}{2}/g;
 		let rexResult = rex.exec(text);
-		while (!!rexResult)
+		while (rexResult !== null)
 		{
-			let value = variables[rexResult[1]];
+			let value = (rexResult[1] !== "") ? variables[rexResult[1]] : variables;
 			if (value !== undefined)
 			{
 				result = result.replace("{{" + rexResult[1] + "}}", ((typeof variableTransformer === "function") ? variableTransformer(String(value)) : value));
