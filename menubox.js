@@ -23,9 +23,9 @@ class Menubox
 				let buttonNode = htmlBuilder.newElement("div",
 				{
 					"data-menubutton": menuButton.key,
-					"innerHTML": menuButton.text,
 					"onclick": Menubox.onMenuItemClick
-				}
+				},
+				menuButton.text
 					);
 				buttonsContainerNode.appendChild(buttonNode);
 			};
@@ -55,11 +55,7 @@ class Menubox
 		};
 		if (!!menuJson.title)
 		{
-			let menuTitle = htmlBuilder.newElement("div.title",
-			{
-				"innerHTML": menuJson.title
-			}
-				);
+			let menuTitle = htmlBuilder.newElement("div.title", menuJson.title);
 			this.element.appendChild(menuTitle);
 		};
 		let itemsContainerNode = htmlBuilder.newElement("div.items");
