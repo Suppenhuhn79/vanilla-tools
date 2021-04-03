@@ -124,3 +124,30 @@ htmlBuilder.clear = function (element)
 		element.firstChild.remove();
 	};
 };
+
+htmlBuilder.dataFromElement = function (object, element)
+{
+	function processPath(object, path, value)
+	{
+		if (path.length > 1)
+		{
+			processPath(object[path[0]], path.slice(1), value);
+		}
+		else
+		{
+			object[path[0]] = value;
+		};
+	};
+	let elementAttribute = element.getAttribute("data-value-attribute") ?? "value";
+	processPath(object, element.getAttribute("data-value-key").split("."), element[elementAttribute]);
+};
+
+htmlBuilder.dataToElement = function (object, element)
+{
+	function processPath(object, path)
+	{
+		return ((path.length === 1) ? object[path[0]] : processPath(object[path[0]], path.slice(1)));
+	};
+	let elementAttribute = element.getAttribute("data-value-attribute") ?? "value";
+	element[elementAttribute] = processPath(object, element.getAttribute("data-value-key").split("."));
+};
