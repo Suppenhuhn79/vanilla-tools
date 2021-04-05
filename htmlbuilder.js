@@ -125,29 +125,50 @@ htmlBuilder.clear = function (element)
 	};
 };
 
-htmlBuilder.dataFromElement = function (object, element)
+htmlBuilder.dataFromElements = function (object, elementRoot)
 {
 	function processPath(object, path, value)
 	{
 		if (path.length > 1)
 		{
-			processPath(object[path[0]], path.slice(1), value);
+			if (!!object[path[0]])
+			{
+				processPath(object[path[0]], path.slice(1), value);
+			};
 		}
 		else
 		{
 			object[path[0]] = value;
 		};
 	};
-	let elementAttribute = element.getAttribute("data-value-attribute") ?? "value";
-	processPath(object, element.getAttribute("data-value-key").split("."), element[elementAttribute]);
+	for (let mappedElement of elementRoot.querySelectorAll("[data-value-key]"))
+	{
+		let elementAttribute = mappedElement.getAttribute("data-value-attribute") ?? "value";
+		processPath(object, mappedElement.getAttribute("data-value-key").split("."), mappedElement[elementAttribute]);
+	};
 };
 
-htmlBuilder.dataToElement = function (object, element)
+htmlBuilder.dataToElements = function (object, elementRoot)
 {
 	function processPath(object, path)
 	{
-		return ((path.length === 1) ? object[path[0]] : processPath(object[path[0]], path.slice(1)));
+		let result = null;
+		if (path.length > 1)
+		{
+			if (!!object[path[0]])
+			{
+				result = processPath(object[path[0]], path.slice(1));
+			};
+		}
+		else
+		{
+			result = object[path[0]];
+		};
+		return result;
 	};
-	let elementAttribute = element.getAttribute("data-value-attribute") ?? "value";
-	element[elementAttribute] = processPath(object, element.getAttribute("data-value-key").split("."));
+	for (let mappedElement of elementRoot.querySelectorAll("[data-value-key]"))
+	{
+		let elementAttribute = mappedElement.getAttribute("data-value-attribute") ?? "value";
+		mappedElement[elementAttribute] = processPath(object, mappedElement.getAttribute("data-value-key").split("."));
+	};
 };
