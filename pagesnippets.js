@@ -101,18 +101,15 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 		"element": 1,
 		"text": 3
 	};
-	function _resolveVariables(text, variables, variableTransformer = null)
+	function _resolveVariables(text, variables, stringTransformer = null)
 	{
+		let rex = /\{{2}([^\}]+)\}{2}/g;
 		let result = text;
-		let rex = /\{{2}([^\}]*)\}{2}/g;
 		let rexResult = rex.exec(text);
-		while (rexResult !== null)
+		while (!!rexResult)
 		{
 			let value = (rexResult[1] !== "") ? variables[rexResult[1]] : variables;
-			if (value !== undefined)
-			{
-				result = result.replace("{{" + rexResult[1] + "}}", ((typeof variableTransformer === "function") ? variableTransformer(String(value)) : value));
-			};
+			result = result.replace("{{" + rexResult[1] + "}}", ((typeof stringTransformer === "function") ? stringTransformer(String(value)) : value));
 			rexResult = rex.exec(text);
 		};
 		return result;
@@ -166,7 +163,7 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 					let child = (!!pageSnippets.namespace) ? document.createElementNS(pageSnippets.namespace, xmlNode.tagName) : document.createElement(xmlNode.tagName);
 					_addAttributes(child, xmlNode, owner, variables);
 					_appendNodes(child, xmlNode, owner, variables);
-					_execPostProduction(child, xmlNode, owner);
+					_execPostProduction(child, xmlNode, owner, variables);
 					node.appendChild(child);
 				};
 				break;
@@ -179,14 +176,15 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 			};
 		};
 	};
-	function _execPostProduction(refNode, xmlNode, owner)
+	function _execPostProduction(refNode, xmlNode, owner, variables)
 	{
 		let postProductionFunction = xmlNode.getAttribute("dht:postproduction");
 		if (!!postProductionFunction)
 		{
+			refNode.removeAttribute("dht:postproduction");
 			if (typeof owner[postProductionFunction] === "function")
 			{
-				owner[postProductionFunction](refNode);
+				owner[postProductionFunction](refNode, variables);
 			}
 			else
 			{
@@ -201,7 +199,7 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 		{
 			if (typeof owner[functionName] === "function")
 			{
-				owner[functionName](refNode);
+				owner[functionName](refNode, variables);
 			}
 			else
 			{
@@ -212,7 +210,6 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 	function __forEach(refNode, xmlNode, owner, variables)
 	{
 		let listKey = xmlNode.getAttribute("list");
-		// console.debug("__forEach()", refNode.outerHTML, xmlNode, xmlNode.firstElementChild, variables[listKey]);
 		for (let i = 0, ii = variables[listKey].length; i < ii; i += 1)
 		{
 			_appendNodes(refNode, xmlNode, owner, variables[listKey][i]);
@@ -220,13 +217,13 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 	};
 	function __if(refNode, xmlNode, owner, variables)
 	{
-		let testExpression = _resolveVariables(xmlNode.getAttribute("test"), variables, (val) => val.replace("'", "\\"));
+		let testExpression = _resolveVariables(xmlNode.getAttribute("test"), variables, (str) => str.replace("'", "\\"));
 		try
 		{
 			if (eval(testExpression) === true)
 			{
-				let thenNode = xmlNode.getElementsByTagName("dht:then")[0];
-				_appendNodes(refNode, thenNode, owner, variables);
+				let thenNode = xmlNode.getElementsByTagName("dht:then");
+				_appendNodes(refNode, ((thenNode.length === 1) ? thenNode[0] : xmlNode), owner, variables);
 			}
 			else
 			{
@@ -242,22 +239,17 @@ pageSnippets.produce = function (snippetName, owner = window, variables = {}
 			throw new EvalError("Cannot evaluate expression \"" + testExpression + "\", " + ex.message);
 		};
 	};
-	if (pageSnippets.snippets[snippetName] === undefined)
+	if (!!pageSnippets.snippets[snippetName])
 	{
-		throw new ReferenceError("Unknown snippet \"" + snippetName + "\".");
+		let snippet = pageSnippets.snippets[snippetName];
+		let result = (!!pageSnippets.namespace) ? document.createElementNS(pageSnippets.namespace, snippet.tagName) : document.createElement(snippet.tagName);
+		_addAttributes(result, snippet, owner, variables);
+		_appendNodes(result, snippet, owner, variables);
+		_execPostProduction(result, snippet, owner, variables);
+		return result;
 	}
 	else
 	{
-		let snippet = pageSnippets.snippets[snippetName];
-		// pageSnippets["namespace"] = document.body.namespaceURI;
-		let result = (!!pageSnippets.namespace) ? document.createElementNS(pageSnippets.namespace, snippet.tagName) : document.createElement(snippet.tagName);
-		// console.debug("pageSnippets.produce", snippetName);
-		// console.group(snippetName);
-		// console.log(snippet.outerHTML);
-		_addAttributes(result, snippet, owner, variables);
-		_appendNodes(result, snippet, owner, variables);
-		_execPostProduction(result, snippet, owner);
-		// console.groupEnd();
-		return result;
+		throw new ReferenceError("Unknown snippet \"" + snippetName + "\".");
 	};
 };
