@@ -6,32 +6,29 @@ Copyright 2021 Christoph Zager, licensed under the Apache License, Version 2.0
 See the full license text at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-/*
-requires htmlbuilder.js
- */
+/* requires htmlbuilder.js */
 
 class Menubox
 {
 	constructor(id, menuJson)
 	{
-		function _createMenuButtons(menuButtonsJson, menubox)
+		function _createMenuButtons(...menuButtons)
 		{
-			let buttonsContainerNode = htmlBuilder.newElement("div.buttons");
-			for (let b = 0, bb = menuButtonsJson.length; b < bb; b += 1)
+			let buttonsContainer = htmlBuilder.newElement("div.buttons");
+			for (let menuButton of menuButtons)
 			{
-				let menuButton = menuButtonsJson[b];
-				let buttonNode = htmlBuilder.newElement("div",
-				{
-					"data-menubutton": menuButton.key,
-					"onclick": Menubox.onMenuItemClick
-				},
-						menuButton.text);
-				buttonsContainerNode.appendChild(buttonNode);
+				buttonsContainer.appendChild(htmlBuilder.newElement("div",
+					{
+						"data-menubutton": menuButton.key,
+						"onclick": Menubox.onMenuItemClick
+					},
+						menuButton.label));
 			};
-			menubox.element.appendChild(buttonsContainerNode);
+			this.element.appendChild(buttonsContainer);
 		};
 		this.id = id;
-		this.element = htmlBuilder.newElement("div",
+		this.multiselect = (menuJson.multiselect === true);
+		this.element = htmlBuilder.newElement("div.menubox",
 		{
 			"data-menubox": id
 		}
@@ -40,53 +37,55 @@ class Menubox
 		this.element.style.top = "0px";
 		this.element.style.left = "0px";
 		this.element.style.visibility = "hidden";
-		if (!!menuJson["class"])
+		if (typeof menuJson["class"] === "string")
 		{
-			let classes = menuJson["class"].split(" ");
-			for (let c = 0, cc = classes.length; c < cc; c += 1)
+			for (let cssClass of menuJson["class"].split(" "))
 			{
-				this.element.classList.add(classes[c]);
+				this.element.classList.add(cssClass);
 			};
 		};
-		if (menuJson.multiselect === true)
+		if (typeof menuJson.title === "string")
 		{
-			this.element.setAttribute("data-multiselect", "yes");
+			this.element.appendChild(htmlBuilder.newElement("div.title", menuJson.title));
 		};
-		if (!!menuJson.title)
+		this.element.appendChild(htmlBuilder.newElement("div.items"));
+		this.setItems((menuJson.items instanceof Array) ? menuJson.items : menuJson);
+		if (menuJson.buttons instanceof Array)
 		{
-			let menuTitle = htmlBuilder.newElement("div.title", menuJson.title);
-			this.element.appendChild(menuTitle);
+			_createMenuButtons.apply(this, menuJson.buttons);
 		};
-		let itemsContainerNode = htmlBuilder.newElement("div.items");
-		this.element.appendChild(itemsContainerNode);
-		this.buildMenuItems(menuJson);
-		if ((!!menuJson.buttons) && (menuJson.buttons.constructor === Array))
+		if (Menubox.instances[this.id])
 		{
-			_createMenuButtons(menuJson.buttons, this);
+			console.warn("Menubox already exists, was replaced.", this.id);
+			let existingMenu = document.body.querySelector("[data-menubox=\"" + id + "\"]");
+			if (existingMenu)
+			{
+				existingMenu.remove()
+			};
 		};
-		let existingMenu = document.querySelector("[data-menubox=\"" + id + "\"]");
-		(!!existingMenu) ? existingMenu.remove() : null;
+		Menubox.instances[this.id] = this;
 		document.body.appendChild(this.element);
 	};
 
+	static instances = {};
+
 	static hideAll()
 	{
-		let allMenuboxes = document.querySelectorAll("[data-menubox]");
-		for (let i = 0, ii = allMenuboxes.length; i < ii; i += 1)
+		for (let key in Menubox.instances)
 		{
-			allMenuboxes[i].style.visibility = "hidden";
+			Menubox.instances[key].element.style.visibility = "hidden";
 		};
 	};
 
 	static onMenuItemClick(clickEvent)
 	{
-		let menuNode = clickEvent.target.closest("[data-menubox]");
+		let menubox = Menubox.instances[clickEvent.target.closest("[data-menubox]").getAttribute("data-menubox")];
 		let menuEvent = new CustomEvent("menubox",
 		{
 			"detail":
 			{
-				"menuId": menuNode.getAttribute("data-menubox"),
-				"context": menuNode.getAttribute("data-context")
+				"context": menubox.context,
+				"menubox": menubox
 			}
 		}
 			);
@@ -94,7 +93,7 @@ class Menubox
 		{
 			menuEvent.detail["buttonKey"] = clickEvent.target.getAttribute("data-menubutton");
 			menuEvent.detail["selectedKeys"] = [];
-			let selectedItems = menuNode.querySelectorAll("[data-menuitem].selected");
+			let selectedItems = menubox.element.querySelectorAll("[data-menuitem].selected");
 			for (let i = 0, ii = selectedItems.length; i < ii; i += 1)
 			{
 				menuEvent.detail.selectedKeys.push(selectedItems[i].getAttribute("data-menuitem"));
@@ -104,7 +103,7 @@ class Menubox
 		}
 		else
 		{
-			if (menuNode.getAttribute("data-multiselect") === "yes")
+			if (menubox.multiselect)
 			{
 				clickEvent.target.classList.toggle("selected");
 				clickEvent.stopPropagation();
@@ -118,115 +117,110 @@ class Menubox
 		};
 	};
 
-	buildMenuItems(menuItems)
+	setItems(itemDefs)
 	{
-		function _convertToAdvancedMenuJson(simpleMenuItems)
+		let itemsContainer = this.element.querySelector("div.items");
+		htmlBuilder.removeAllChildren(itemsContainer);
+		if (itemDefs instanceof Array)
 		{
-			let result = [];
-			for (let itemKey in menuItems)
+			for (let itemDef of itemDefs)
 			{
-				if (!!menuItems[itemKey])
+				this.appendItem(itemDef);
+			};
+		}
+		else
+		{
+			for (let key in itemDefs)
+			{
+				this.appendItem(
 				{
-					result.push(
+					[key]: itemDefs[key]
+				}
+				);
+			};
+		};
+	};
+
+	appendItem(itemDef)
+	{
+		if ((itemDef.key === undefined) && (itemDef.separator === undefined))
+		{
+			for (let key in itemDef)
+			{
+				if (typeof itemDef[key] === "string")
+				{
+					itemDef =
 					{
-						"key": itemKey,
-						"text": menuItems[itemKey]
-					}
-					);
+						"key": key,
+						"label": itemDef[key]
+					};
 				}
 				else
 				{
-					result.push(
+					itemDef =
 					{
-						"separator": true
+						"separator": {}
 					}
-					);
 				};
+				break;
 			};
-			return result;
 		};
-		if ((!!menuItems.items) && (menuItems.items.constructor === Array))
+		let itemNode;
+		if (!itemDef.separator)
 		{
-			menuItems = menuItems.items;
+			itemNode = htmlBuilder.newElement("div",
+			{
+				"data-menuitem": itemDef.key,
+				"onclick": Menubox.onMenuItemClick
+			}, itemDef.label);
+			if (itemDef.selected)
+			{
+				itemNode.classList.add("selected");
+			};
 		}
-		else if (menuItems.constructor !== Array)
+		else
 		{
-			menuItems = _convertToAdvancedMenuJson(menuItems);
+			itemNode = htmlBuilder.newElement("div.separator", "&#160;");
 		};
-		let itemsContainerNode = document.createElement("div");
-		itemsContainerNode.classList.add("items");
-		for (let i = 0, ii = menuItems.length; i < ii; i += 1)
-		{
-			let menuItem = menuItems[i];
-			let itemNode = document.createElement("div");
-			if (menuItem.separator !== true)
-			{
-				itemNode.setAttribute("data-menuitem", menuItem.key);
-				if (menuItem.selected)
-				{
-					itemNode.classList.add("selected");
-				};
-				itemNode.innerHTML = menuItem.text;
-				itemNode.onclick = Menubox.onMenuItemClick;
-				if (typeof menuItem.postrender === "function")
-				{
-					menuItem.postrender(itemNode);
-				};
-			}
-			else
-			{
-				itemNode.classList.add("separator");
-				itemNode.innerHTML = "&#160;";
-			};
-			itemsContainerNode.appendChild(itemNode);
-		};
-		this.element.replaceChild(itemsContainerNode, this.element.querySelector("div.items"));
+		this.element.querySelector("div.items").appendChild(itemNode);
 	};
 
 	selectItem(itemKey, beSelected = true)
 	{
-		if (this.element.getAttribute("data-multiselect") !== "yes")
+		if (this.multiselect === false)
 		{
-			let items = this.element.querySelectorAll("[data-menuitem]");
-			for (let i = 0, ii = items.length; i < ii; i += 1)
+			for (let item of this.element.querySelectorAll("[data-menuitem]"))
 			{
-				items[i].classList.remove("selected");
+				item.classList.remove("selected");
 			};
 		};
 		let selectedItem = this.element.querySelector("[data-menuitem=\"" + itemKey + "\"]");
-		if (!!selectedItem)
+		if (selectedItem)
 		{
 			(beSelected) ? selectedItem.classList.add("selected") : selectedItem.classList.remove("selected");
 		};
 	};
 
-	popup(clickEvent, context = null, anchorElement, adjustment = "start left, below bottom")
+	popup(clickEvent, context = null, anchorElement = null, adjustment = "start left, below bottom")
 	{
 		Menubox.hideAll();
-		if (clickEvent instanceof Event)
+		if (clickEvent instanceof MouseEvent)
 		{
 			clickEvent.stopPropagation();
-			this.element.style.top = clickEvent.clientY + document.documentElement.scrollTop + "px";
-			this.element.style.left = clickEvent.clientX + document.documentElement.scrollLeft + "px";
+			if (anchorElement instanceof HTMLElement)
+			{
+				htmlBuilder.adjust(this.element, anchorElement, adjustment);
+			}
+			else
+			{
+				this.element.style.top = clickEvent.clientY + document.documentElement.scrollTop + "px";
+				this.element.style.left = clickEvent.clientX + document.documentElement.scrollLeft + "px";
+			};
+			this.context = context;
+			this.element.style.visibility = "visible";
 		};
-		if (context !== null)
-		{
-			this.element.setAttribute("data-context", context);
-		};
-		if (anchorElement instanceof HTMLElement)
-		{
-			htmlBuilder.adjust(this.element, anchorElement, adjustment);
-		}
-		this.element.style.visibility = "visible";
 	};
 
 };
 
-window.addEventListener("click", (clickEvent) =>
-{
-	if (clickEvent.target.closest("[data-menubox]") === null)
-	{
-		Menubox.hideAll();
-	}
-}
-);
+window.addEventListener("click", (clickEvent) => ((clickEvent.target.closest("[data-menubox]") === null) ? Menubox.hideAll() : null));
