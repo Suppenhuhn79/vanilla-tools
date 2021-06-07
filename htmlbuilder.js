@@ -45,10 +45,17 @@ htmlBuilder.adjust = function (element, anchorElement, adjustment = "below botto
 
 htmlBuilder.newElement = function (elementDefinition, ...content)
 {
-	let tagName = /^[^#.\s]+/.exec(elementDefinition)[0];
+	let tagName = /^[^#.\s\[]+/.exec(elementDefinition)[0];
 	let result = document.createElement(tagName);
-	let idDefinition = /#([^.\s]+)/.exec(elementDefinition);
+	let idDefinition = /#([^.\s\[]+)/.exec(elementDefinition);
 	(!!idDefinition) ? result.id = idDefinition[1] : null;
+	let attributesRex = /\[(.+?)=(['"])(.+?)\2\]/g,
+	attributesMatch;
+	while (attributesMatch = attributesRex.exec(elementDefinition))
+	{
+		result.setAttribute(attributesMatch[1], attributesMatch[3]);
+	};
+	elementDefinition = /[^\[]+/.exec(elementDefinition);
 	let cssClassesRex = /\.([^.\s]+)/g,
 	cssClassMatch;
 	while (cssClassMatch = cssClassesRex.exec(elementDefinition))

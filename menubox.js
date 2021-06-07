@@ -25,8 +25,7 @@ class Menubox
 					"data-menubutton": menuButton.key,
 					"onclick": Menubox.onMenuItemClick
 				},
-				menuButton.text
-					);
+						menuButton.text);
 				buttonsContainerNode.appendChild(buttonNode);
 			};
 			menubox.element.appendChild(buttonsContainerNode);
@@ -66,7 +65,7 @@ class Menubox
 			_createMenuButtons(menuJson.buttons, this);
 		};
 		let existingMenu = document.querySelector("[data-menubox=\"" + id + "\"]");
-		(!!existingMenu) ? existingMenu.remove():null;
+		(!!existingMenu) ? existingMenu.remove() : null;
 		document.body.appendChild(this.element);
 	};
 
@@ -210,7 +209,10 @@ class Menubox
 			this.element.style.top = clickEvent.clientY + document.documentElement.scrollTop + "px";
 			this.element.style.left = clickEvent.clientX + document.documentElement.scrollLeft + "px";
 		};
-		this.element.setAttribute("data-context", context);
+		if (context !== null)
+		{
+			this.element.setAttribute("data-context", context);
+		};
 		if (anchorElement instanceof HTMLElement)
 		{
 			htmlBuilder.adjust(this.element, anchorElement, adjustment);
