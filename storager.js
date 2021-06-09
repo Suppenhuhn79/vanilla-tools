@@ -6,7 +6,7 @@ Copyright 2021 Christoph Zager, licensed under the Apache License, Version 2.0
 See the full license text at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-var storager = {};
+const storager = {};
 
 storager.store = function (key, title, data)
 {

@@ -6,9 +6,7 @@ Copyright 2021 Christoph Zager, licensed under the Apache License, Version 2.0
 See the full license text at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-var fileIo = {};
-
-fileIo.fetchForceReload = true;
+const fileIo = {};
 
 fileIo.offerFileToClient = function (filename, data, type = "text/plain")
 {
@@ -52,15 +50,14 @@ fileIo.fetchServerFile = function (url, autoRecognizeDataType = true)
 	return new Promise((resolve, reject) =>
 	{
 		let httpRequest = new XMLHttpRequest();
-		httpRequest.open("GET", (fileIo.fetchForceReload) ? url + "?" + (new Date()).toISOString().replace(/[^a-z0-9]/gi, "") : url);
+		httpRequest.open("GET", url);
 		httpRequest.onloadend = (httpEvent) =>
 		{
 			let result = httpEvent.target.responseText;
 			let error = null;
 			if (httpEvent.target.status !== 200)
 			{
-				let surl = (url.includes("?")) ? url.substr(0, url.indexOf("?")) : url;
-				reject(new ReferenceError("Getting \"" + surl + "\" returned HTTP status code " + httpEvent.target.status));
+				reject(new ReferenceError("Getting \"" + url + "\" returned HTTP status code " + httpEvent.target.status));
 			}
 			else
 			{
