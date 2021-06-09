@@ -56,7 +56,7 @@ class Menubox
 		};
 		if (Menubox.instances[this.id])
 		{
-			console.warn("Menubox already exists, was replaced.", this.id);
+			console.warn("Menubox \"" + this.id + "\" did already exist, has been replaced.");
 			let existingMenu = document.body.querySelector("[data-menubox=\"" + id + "\"]");
 			if (existingMenu)
 			{
