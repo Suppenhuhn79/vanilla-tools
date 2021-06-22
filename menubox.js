@@ -10,12 +10,50 @@ See the full license text at http://www.apache.org/licenses/LICENSE-2.0
 
 class Menubox
 {
-	constructor(id, menuJson)
+	constructor(id, menuJson, _parentMenubox = null)
 	{
-		function _createMenuButtons(...menuButtons)
+		this.id = id;
+		if (Menubox.instances[this.id])
+		{
+			console.warn("Menubox already exists, was replaced.", this.id);
+			document.body.querySelector("[data-menubox=\"" + id + "\"]")?.remove();
+		};
+		this.parentMenubox = _parentMenubox;
+		this.multiselect = (menuJson.multiselect === true);
+		this.adjust = Object.assign(
+		{
+			"visibility": ["hidden", "visible"]
+		}, menuJson.adjust);
+		let container = htmlBuilder.newElement("div");
+		this.element = htmlBuilder.newElement("div.menubox",
+		{
+			"data-menubox": id
+		}, container);
+		if (_parentMenubox)
+		{
+			this.element.setAttribute("data-parentmenubox", _parentMenubox.id);
+		};
+		this.element.style.position = menuJson.position ?? "absolute";
+		this.element.style.top = "0px";
+		this.element.style.left = "0px";
+		if (typeof menuJson.css === "string")
+		{
+			for (let cssClass of menuJson.css.split(" "))
+			{
+				this.element.classList.add(cssClass);
+			};
+		};
+		document.body.appendChild(this.element);
+		if (typeof menuJson.title === "string")
+		{
+			container.appendChild(htmlBuilder.newElement("div.title", menuJson.title));
+		};
+		container.appendChild(htmlBuilder.newElement("div.items"));
+		this.setItems((menuJson.items instanceof Array) ? menuJson.items : menuJson);
+		if (menuJson.buttons instanceof Array)
 		{
 			let buttonsContainer = htmlBuilder.newElement("div.buttons");
-			for (let menuButton of menuButtons)
+			for (let menuButton of menuJson.buttons)
 			{
 				buttonsContainer.appendChild(htmlBuilder.newElement("div",
 					{
@@ -24,63 +62,33 @@ class Menubox
 					},
 						menuButton.label));
 			};
-			this.element.appendChild(buttonsContainer);
-		};
-		this.id = id;
-		this.multiselect = (menuJson.multiselect === true);
-		this.element = htmlBuilder.newElement("div.menubox",
-		{
-			"data-menubox": id
-		}
-			);
-		this.element.style.position = (!!menuJson.position) ? menuJson.position : "absolute";
-		this.element.style.top = "0px";
-		this.element.style.left = "0px";
-		this.element.style.visibility = "hidden";
-		if (typeof menuJson["class"] === "string")
-		{
-			for (let cssClass of menuJson["class"].split(" "))
-			{
-				this.element.classList.add(cssClass);
-			};
-		};
-		if (typeof menuJson.title === "string")
-		{
-			this.element.appendChild(htmlBuilder.newElement("div.title", menuJson.title));
-		};
-		this.element.appendChild(htmlBuilder.newElement("div.items"));
-		this.setItems((menuJson.items instanceof Array) ? menuJson.items : menuJson);
-		if (menuJson.buttons instanceof Array)
-		{
-			_createMenuButtons.apply(this, menuJson.buttons);
-		};
-		if (Menubox.instances[this.id])
-		{
-			console.warn("Menubox \"" + this.id + "\" did already exist, has been replaced.");
-			let existingMenu = document.body.querySelector("[data-menubox=\"" + id + "\"]");
-			if (existingMenu)
-			{
-				existingMenu.remove()
-			};
+			container.appendChild(buttonsContainer);
 		};
 		Menubox.instances[this.id] = this;
-		document.body.appendChild(this.element);
+		Menubox.hideAll();
 	};
+
+	static EVENT_ID = "menubox";
 
 	static instances = {};
 
-	static hideAll()
+	static hideAll(exceptFor = "")
 	{
 		for (let key in Menubox.instances)
 		{
-			Menubox.instances[key].element.style.visibility = "hidden";
+			if (exceptFor.startsWith(key) === false)
+			{
+				Menubox.instances[key].setVisibility(false);
+			}
 		};
 	};
 
 	static onMenuItemClick(clickEvent)
 	{
+		clickEvent.stopPropagation();
+		let menuboxItem = clickEvent.target.closest("[data-menuitem]");
 		let menubox = Menubox.instances[clickEvent.target.closest("[data-menubox]").getAttribute("data-menubox")];
-		let menuEvent = new CustomEvent("menubox",
+		let menuEvent = new CustomEvent(Menubox.EVENT_ID,
 		{
 			"detail":
 			{
@@ -89,31 +97,54 @@ class Menubox
 			}
 		}
 			);
-		if (!!clickEvent.target.getAttribute("data-menubutton"))
+		if (clickEvent.target.getAttribute("data-menubutton"))
 		{
 			menuEvent.detail["buttonKey"] = clickEvent.target.getAttribute("data-menubutton");
 			menuEvent.detail["selectedKeys"] = [];
-			let selectedItems = menubox.element.querySelectorAll("[data-menuitem].selected");
-			for (let i = 0, ii = selectedItems.length; i < ii; i += 1)
+			for (let item of menubox.element.querySelectorAll("[data-menuitem].selected"))
 			{
-				menuEvent.detail.selectedKeys.push(selectedItems[i].getAttribute("data-menuitem"));
+				menuEvent.detail.selectedKeys.push(item.getAttribute("data-menuitem"));
 			};
-			window.dispatchEvent(new CustomEvent("menubox", menuEvent));
+			window.dispatchEvent(new CustomEvent(Menubox.EVENT_ID, menuEvent));
 			Menubox.hideAll();
+		}
+		else if (menuboxItem.getAttribute("data-submenu"))
+		{
+			let submenuId = menuboxItem.getAttribute("data-submenu");
+			let submenu = menubox.submenus[submenuId];
+			Menubox.hideAll(submenuId);
+			submenu.popup(clickEvent, menubox.context, menuboxItem, submenu.alignment);
 		}
 		else
 		{
 			if (menubox.multiselect)
 			{
 				clickEvent.target.classList.toggle("selected");
-				clickEvent.stopPropagation();
 			}
 			else
 			{
-				menuEvent.detail["itemKey"] = clickEvent.target.getAttribute("data-menuitem");
-				window.dispatchEvent(new CustomEvent("menubox", menuEvent));
+				menuEvent.detail["itemKey"] = menuboxItem.getAttribute("data-menuitem");
+				window.dispatchEvent(new CustomEvent(Menubox.EVENT_ID, menuEvent));
 				Menubox.hideAll();
 			};
+		};
+	};
+
+	setVisibility(visible)
+	{
+		let styleIndex = (visible) ? 1 : 0;
+		for (let key in this.adjust)
+		{
+			let styleValue = this.adjust[key][styleIndex];
+			if ((key === "height") && (styleValue === "auto"))
+			{
+				styleValue = this.element.firstElementChild.offsetHeight + "px";
+			}
+			else if ((key === "width") && (styleValue === "auto"))
+			{
+				styleValue = this.element.firstElementChild.offsetWidth + "px";
+			};
+			this.element.style[key] = styleValue;
 		};
 	};
 
@@ -168,14 +199,34 @@ class Menubox
 		let itemNode;
 		if (!itemDef.separator)
 		{
-			itemNode = htmlBuilder.newElement("div",
+			itemNode = htmlBuilder.newElement("div.menuitem",
 			{
 				"data-menuitem": itemDef.key,
-				"onclick": Menubox.onMenuItemClick
+				"onclick": itemDef.onclick ?? Menubox.onMenuItemClick
 			}, itemDef.label);
+			if (itemDef.icon)
+			{
+				itemNode.insertBefore(htmlBuilder.newElement("img",
+					{
+						"src": itemDef.icon
+					}
+					), itemNode.firstChild);
+			};
+			if (itemDef.iconFontAwesome)
+			{
+				itemNode.insertBefore(htmlBuilder.newElement("i." + itemDef.iconFontAwesome.replace(" ", ".")), itemNode.firstChild);
+			};
 			if (itemDef.selected)
 			{
 				itemNode.classList.add("selected");
+			};
+			if (itemDef.submenu)
+			{
+				let submenuId = this.id + "::" + itemDef.key;
+				itemNode.setAttribute("data-submenu", submenuId);
+				this.submenus ??= {};
+				this.submenus[submenuId] = new Menubox(submenuId, itemDef.submenu, this);
+				this.submenus[submenuId].alignment = itemDef.submenu.alignment ?? "start right, below top";
 			};
 		}
 		else
@@ -195,30 +246,30 @@ class Menubox
 			};
 		};
 		let selectedItem = this.element.querySelector("[data-menuitem=\"" + itemKey + "\"]");
-		if (selectedItem)
-		{
-			(beSelected) ? selectedItem.classList.add("selected") : selectedItem.classList.remove("selected");
-		};
+		(beSelected) ? selectedItem?.classList.add("selected") : selectedItem?.classList.remove("selected");
 	};
 
 	popup(clickEvent, context = null, anchorElement = null, adjustment = "start left, below bottom")
 	{
-		Menubox.hideAll();
+		if (!this.parentMenubox)
+		{
+			Menubox.hideAll();
+		};
 		if (clickEvent instanceof MouseEvent)
 		{
 			clickEvent.stopPropagation();
-			if (anchorElement instanceof HTMLElement)
-			{
-				htmlBuilder.adjust(this.element, anchorElement, adjustment);
-			}
-			else
+			if ((anchorElement instanceof HTMLElement) === false)
 			{
 				this.element.style.top = clickEvent.clientY + document.documentElement.scrollTop + "px";
 				this.element.style.left = clickEvent.clientX + document.documentElement.scrollLeft + "px";
 			};
-			this.context = context;
-			this.element.style.visibility = "visible";
 		};
+		if (anchorElement instanceof HTMLElement)
+		{
+			htmlBuilder.adjust(this.element, anchorElement, adjustment);
+		};
+		this.context = context;
+		this.setVisibility(true);
 	};
 
 };
