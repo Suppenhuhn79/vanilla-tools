@@ -15,18 +15,19 @@ htmlBuilder.adjust = function (element, anchorElement, adjustment = "below botto
 	let position = {};
 	let elementPositionIsFixed = (window.getComputedStyle(element).position === "fixed");
 	/* horizontal adjustment */
-	position["x"] = (!!/\bright\b/i.exec(adjustment)) ? anchorRect.right : anchorRect.left;
+	position.x = (!!/\bright\b/i.exec(adjustment)) ? anchorRect.right : anchorRect.left;
 	position.x -= (!!/\bend\b/i.exec(adjustment)) ? element.offsetWidth : 0;
 	position.x += (!!/\bcenter\b/i.exec(adjustment)) ? ((anchorRect.width - element.offsetWidth) / 2) : 0;
 	/* vertical adjustment */
-	position["y"] = (!!/\bbottom\b/i.exec(adjustment)) ? anchorRect.bottom : anchorRect.top;
+	position.y = (!!/\bbottom\b/i.exec(adjustment)) ? anchorRect.bottom : anchorRect.top;
 	position.y -= (!!/\babove\b/i.exec(adjustment)) ? element.offsetHeight : 0;
 	position.y += (!!/\bmiddle\b/i.exec(adjustment)) ? ((anchorRect.height - element.offsetHeight) / 2) : 0;
 	/* prevent exceeding the docment client area */
 	/* document.body.clientWidth for x, because window.innerWidth does not exclude a scrollbar; we expect a document not be wider than the window */
-	let exceedings = {};
-	exceedings["x"] = ((elementPositionIsFixed) ? document.body.clientWidth : document.documentElement.offsetWidth) - position.x - element.offsetWidth;
-	exceedings["y"] = ((elementPositionIsFixed) ? window.innerHeight : document.documentElement.offsetHeight) - position.y - element.offsetHeight;
+	let exceedings = {
+		x: ((elementPositionIsFixed) ? document.body.clientWidth : document.documentElement.offsetWidth) - position.x - element.offsetWidth,
+		y: ((elementPositionIsFixed) ? window.innerHeight : document.documentElement.offsetHeight) - position.y - element.offsetHeight
+	};
 	position.x += Math.min(exceedings.x, 0);
 	position.y += Math.min(exceedings.y, 0);
 	/* prevent positions < 0 */
@@ -49,7 +50,7 @@ htmlBuilder.newElement = function (elementDefinition, ...content)
 	let result = document.createElement(tagName);
 	let idDefinition = /#([^.\s\[]+)/.exec(elementDefinition);
 	(!!idDefinition) ? result.id = idDefinition[1] : null;
-	let attributesRex = /\[(.+?)=(['"])(.+?)\2\]/g,
+	let attributesRex = /\[(.+?)=(['"])(.*?)\2\]/g,
 	attributesMatch;
 	while (attributesMatch = attributesRex.exec(elementDefinition))
 	{
@@ -123,7 +124,7 @@ htmlBuilder.removeClasses = function (classes, rootElement = document.body)
 
 htmlBuilder.removeAllChildren = function (element)
 {
-	while (!!element.firstChild)
+	while (element.firstChild)
 	{
 		element.firstChild.remove();
 	};
