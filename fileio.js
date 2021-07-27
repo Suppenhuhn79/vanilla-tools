@@ -54,7 +54,6 @@ fileIo.fetchServerFile = function (url, autoRecognizeDataType = true)
 		httpRequest.onloadend = (httpEvent) =>
 		{
 			let result = httpEvent.target.responseText;
-			let error = null;
 			if (httpEvent.target.status !== 200)
 			{
 				reject(new ReferenceError("Getting \"" + url + "\" returned HTTP status code " + httpEvent.target.status));
