@@ -121,7 +121,7 @@ class Menubox
 			{
 				clickEvent.target.classList.toggle("selected");
 			}
-			else
+			else if (clickEvent.target.classList.contains("disabled") === false)
 			{
 				menuEvent.detail["itemKey"] = menuboxItem.getAttribute("data-menuitem");
 				Menubox.hideAll();
@@ -220,6 +220,10 @@ class Menubox
 			{
 				itemNode.classList.add("selected");
 			};
+			if (itemDef.enabled === false)
+			{
+				itemNode.classList.add("disabled");
+			};
 			if (itemDef.submenu)
 			{
 				let submenuId = this.id + "::" + itemDef.key;
@@ -231,7 +235,7 @@ class Menubox
 		}
 		else
 		{
-			itemNode = htmlBuilder.newElement("div.separator", "&#160;");
+			itemNode = htmlBuilder.newElement("div.separator", "\u00a0");
 		};
 		this.element.querySelector("div.items").appendChild(itemNode);
 	};
