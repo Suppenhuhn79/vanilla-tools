@@ -15,7 +15,7 @@ class Menubox
 		this.id = id;
 		if (Menubox.instances[this.id])
 		{
-			console.warn("Menubox already exists, was replaced.", this.id);
+			console.info("Menubox \"" + this.id + "\" already existed, has been replaced.");
 			document.body.querySelector("[data-menubox=\"" + id + "\"]")?.remove();
 		};
 		this.parentMenubox = _parentMenubox;
