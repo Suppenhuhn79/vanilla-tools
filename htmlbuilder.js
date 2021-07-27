@@ -69,7 +69,7 @@ htmlBuilder.newElement = function (elementDefinition, ...content)
 		{
 		case "String":
 		case "Number":
-			result.innerHTML = item;
+			result.appendChild(document.createTextNode(item));
 			break;
 		case "Object":
 			for (let key in item)
