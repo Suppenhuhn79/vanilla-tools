@@ -105,8 +105,8 @@ class Menubox
 			{
 				menuEvent.detail.selectedKeys.push(item.getAttribute("data-menuitem"));
 			};
-			window.dispatchEvent(new CustomEvent(Menubox.EVENT_ID, menuEvent));
 			Menubox.hideAll();
+			window.dispatchEvent(new CustomEvent(Menubox.EVENT_ID, menuEvent));
 		}
 		else if (menuboxItem.getAttribute("data-submenu"))
 		{
@@ -124,8 +124,8 @@ class Menubox
 			else
 			{
 				menuEvent.detail["itemKey"] = menuboxItem.getAttribute("data-menuitem");
-				window.dispatchEvent(new CustomEvent(Menubox.EVENT_ID, menuEvent));
 				Menubox.hideAll();
+				window.dispatchEvent(new CustomEvent(Menubox.EVENT_ID, menuEvent));
 			};
 		};
 	};
