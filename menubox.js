@@ -175,7 +175,7 @@ class Menubox
 
 	appendItem(itemDef)
 	{
-		if ((itemDef.key === undefined) && (itemDef.separator === undefined))
+		if ((itemDef.key === undefined) && (itemDef.separator === undefined) && (itemDef.html === undefined))
 		{
 			for (let key in itemDef)
 			{
@@ -198,7 +198,7 @@ class Menubox
 			};
 		};
 		let itemNode;
-		if (!itemDef.separator)
+		if (itemDef.key !== undefined)
 		{
 			itemNode = htmlBuilder.newElement("div.menuitem",
 			{
@@ -234,9 +234,13 @@ class Menubox
 				this.submenus[submenuId].alignment = itemDef.submenu.alignment ?? "start right, below top";
 			};
 		}
-		else
+		else if (itemDef.separator)
 		{
 			itemNode = htmlBuilder.newElement("div.separator", "\u00a0");
+		}
+		else if (itemDef.html)
+		{
+			itemNode = itemDef.html;
 		};
 		this.element.querySelector("div.items").appendChild(itemNode);
 	};
