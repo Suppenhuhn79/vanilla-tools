@@ -27,7 +27,8 @@ class Menubox
 		let container = htmlBuilder.newElement("div");
 		this.element = htmlBuilder.newElement("div.menubox",
 		{
-			"data-menubox": id
+			"data-menubox": id,
+			"onclick": (evt) => { evt.stopPropagation(); }
 		}, container);
 		if (_parentMenubox)
 		{
