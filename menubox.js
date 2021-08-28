@@ -10,7 +10,7 @@ See the full license text at http://www.apache.org/licenses/LICENSE-2.0
 
 class Menubox
 {
-	constructor(id, menuJson, _parentMenubox = null)
+	constructor(id, menuJson, eventHandler = null, _parentMenubox = null)
 	{
 		this.id = id;
 		if (Menubox.instances[this.id])
@@ -18,6 +18,7 @@ class Menubox
 			console.info("Menubox \"" + this.id + "\" already existed, has been replaced.");
 			document.body.querySelector("[data-menubox=\"" + id + "\"]")?.remove();
 		};
+		this.eventHandler = eventHandler;
 		this.parentMenubox = _parentMenubox;
 		this.multiselect = (menuJson.multiselect === true);
 		this.adjust = Object.assign(
@@ -86,28 +87,34 @@ class Menubox
 
 	static onMenuItemClick(clickEvent)
 	{
+		function _dispatchEvent(eventDetails)
+		{
+			Menubox.hideAll();
+			if (typeof eventDetails.menubox.eventHandler === "function")
+			{
+				eventDetails.menubox.eventHandler(Object.assign(eventDetails, {originalEvent: clickEvent}));
+			}
+			else
+			{
+				window.dispatchEvent(new CustomEvent(Menubox.EVENT_ID, { detail: eventDetails }));
+			};
+		};
 		clickEvent.stopPropagation();
 		let menuboxItem = clickEvent.target.closest("[data-menuitem]");
 		let menubox = Menubox.instances[clickEvent.target.closest("[data-menubox]").getAttribute("data-menubox")];
-		let menuEvent = new CustomEvent(Menubox.EVENT_ID,
-		{
-			"detail":
-			{
-				"context": menubox.context,
-				"menubox": menubox
-			}
-		}
-			);
+		let eventDetails = {
+			"context": menubox.context,
+			"menubox": menubox
+		};
 		if (clickEvent.target.getAttribute("data-menubutton"))
 		{
-			menuEvent.detail["buttonKey"] = clickEvent.target.getAttribute("data-menubutton");
-			menuEvent.detail["selectedKeys"] = [];
+			eventDetails.buttonKey = clickEvent.target.getAttribute("data-menubutton");
+			eventDetails.selectedKeys = [];
 			for (let item of menubox.element.querySelectorAll("[data-menuitem].selected"))
 			{
-				menuEvent.detail.selectedKeys.push(item.getAttribute("data-menuitem"));
+				eventDetails.selectedKeys.push(item.getAttribute("data-menuitem"));
 			};
-			Menubox.hideAll();
-			window.dispatchEvent(new CustomEvent(Menubox.EVENT_ID, menuEvent));
+			_dispatchEvent(eventDetails);
 		}
 		else if (menuboxItem.getAttribute("data-submenu"))
 		{
@@ -124,9 +131,8 @@ class Menubox
 			}
 			else if (clickEvent.target.classList.contains("disabled") === false)
 			{
-				menuEvent.detail["itemKey"] = menuboxItem.getAttribute("data-menuitem");
-				Menubox.hideAll();
-				window.dispatchEvent(new CustomEvent(Menubox.EVENT_ID, menuEvent));
+				eventDetails.itemKey = menuboxItem.getAttribute("data-menuitem");
+				_dispatchEvent(eventDetails);
 			};
 		};
 	};
@@ -230,7 +236,7 @@ class Menubox
 				let submenuId = this.id + "::" + itemDef.key;
 				itemNode.setAttribute("data-submenu", submenuId);
 				this.submenus ??= {};
-				this.submenus[submenuId] = new Menubox(submenuId, itemDef.submenu, this);
+				this.submenus[submenuId] = new Menubox(submenuId, itemDef.submenu, this.eventHandler, this);
 				this.submenus[submenuId].alignment = itemDef.submenu.alignment ?? "start right, below top";
 			};
 		}
