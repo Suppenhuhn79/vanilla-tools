@@ -206,11 +206,15 @@ class Menubox
 		let itemNode;
 		if (itemDef.key !== undefined)
 		{
-			itemNode = htmlBuilder.newElement("div.menuitem",
+			itemNode = htmlBuilder.newElement(((itemDef.href) ? "a" : "div") + ".menuitem",
 			{
 				"data-menuitem": itemDef.key,
 				"onclick": itemDef.onclick ?? Menubox.onMenuItemClick
-			}, itemDef.label);
+			}, itemDef.label ?? itemDef.href ?? itemDef.key);
+			if (itemDef.href)
+			{
+				itemNode.href = itemDef.href;
+			};
 			if (itemDef.icon)
 			{
 				itemNode.insertBefore(htmlBuilder.newElement("img",
