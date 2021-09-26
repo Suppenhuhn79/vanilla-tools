@@ -20,7 +20,8 @@ class Menubox
 		};
 		this.eventHandler = eventHandler;
 		this.parentMenubox = _parentMenubox;
-		this.multiselect = (menuJson.multiselect === true);
+		this.selectMode = menuJson.selectMode ?? ((menuJson.multiselect === true) ? Menubox.SelectMode.multiselect : Menubox.SelectMode.normal);
+		this.multiselect = ([Menubox.SelectMode.multiselect, Menubox.SelectMode.multiselect_interactive].includes(this.selectMode));
 		this.adjust = Object.assign(
 		{
 			"visibility": ["hidden", "visible"]
@@ -62,7 +63,7 @@ class Menubox
 						"data-menubutton": menuButton.key,
 						"onclick": Menubox.onMenuItemClick
 					},
-						menuButton.label));
+						menuButton.label ?? menuButton.key));
 			};
 			container.appendChild(buttonsContainer);
 		};
@@ -72,6 +73,13 @@ class Menubox
 
 	static EVENT_ID = "menubox";
 
+	static SelectMode = {
+		normal: 0,
+		persistent: 1,
+		multiselect: 2,
+		multiselect_interactive: 3
+	};
+	
 	static instances = {};
 
 	static hideAll(exceptFor = "")
@@ -87,52 +95,61 @@ class Menubox
 
 	static onMenuItemClick(clickEvent)
 	{
-		function _dispatchEvent(eventDetails)
-		{
-			Menubox.hideAll();
-			if (typeof eventDetails.menubox.eventHandler === "function")
-			{
-				eventDetails.menubox.eventHandler(Object.assign(eventDetails, {originalEvent: clickEvent}));
-			}
-			else
-			{
-				window.dispatchEvent(new CustomEvent(Menubox.EVENT_ID, { detail: eventDetails }));
-			};
-		};
 		clickEvent.stopPropagation();
-		let menuboxItem = clickEvent.target.closest("[data-menuitem]");
-		let menubox = Menubox.instances[clickEvent.target.closest("[data-menubox]").getAttribute("data-menubox")];
-		let eventDetails = {
-			"context": menubox.context,
-			"menubox": menubox
-		};
-		if (clickEvent.target.getAttribute("data-menubutton"))
+		if (clickEvent.target.classList.contains("disabled") === false)
 		{
-			eventDetails.buttonKey = clickEvent.target.getAttribute("data-menubutton");
-			eventDetails.selectedKeys = [];
-			for (let item of menubox.element.querySelectorAll("[data-menuitem].selected"))
+			let menuboxItem = clickEvent.target.closest("[data-menuitem]");
+			let menuboxButton = clickEvent.target.closest("[data-menubutton]");
+			let menubox = Menubox.instances[clickEvent.target.closest("[data-menubox]").getAttribute("data-menubox")];
+			if ((menubox.selectMode === Menubox.SelectMode.normal) || (menuboxButton))
 			{
-				eventDetails.selectedKeys.push(item.getAttribute("data-menuitem"));
+				Menubox.hideAll();
 			};
-			_dispatchEvent(eventDetails);
-		}
-		else if (menuboxItem.getAttribute("data-submenu"))
-		{
-			let submenuId = menuboxItem.getAttribute("data-submenu");
-			let submenu = menubox.submenus[submenuId];
-			Menubox.hideAll(submenuId);
-			submenu.popup(clickEvent, menubox.context, menuboxItem, submenu.alignment);
-		}
-		else
-		{
-			if (menubox.multiselect)
+			if (menuboxItem)
 			{
-				clickEvent.target.classList.toggle("selected");
-			}
-			else if (clickEvent.target.classList.contains("disabled") === false)
+				let submenuId = menuboxItem.getAttribute("data-submenu");
+				if (submenuId)
+				{
+					let submenu = menubox.submenus[submenuId];
+					Menubox.hideAll(submenuId);
+					submenu.popup(clickEvent, menubox.context, menuboxItem, submenu.alignment);
+				}
+				else if (menubox.multiselect)
+				{
+					clickEvent.target.classList.toggle("selected");
+				};
+			};
+			if ((menubox.selectMode !== Menubox.SelectMode.multiselect) || (menuboxButton))
 			{
-				eventDetails.itemKey = menuboxItem.getAttribute("data-menuitem");
-				_dispatchEvent(eventDetails);
+				/* dispatch event */
+				let eventDetails =
+				{
+					"context": menubox.context,
+					"menubox": menubox
+				};
+				if (menuboxItem) {
+					eventDetails.itemKey = menuboxItem.getAttribute("data-menuitem");
+				}
+				else if (menuboxButton)
+				{
+					eventDetails.buttonKey = menuboxButton.getAttribute("data-menubutton");
+				};
+				if (menubox.multiselect)
+				{
+					eventDetails.selectedKeys = [];
+					for (let item of menubox.element.querySelectorAll("[data-menuitem].selected"))
+					{
+						eventDetails.selectedKeys.push(item.getAttribute("data-menuitem"));
+					};
+				};
+				if (typeof menubox.eventHandler === "function")
+				{
+					menubox.eventHandler(Object.assign(eventDetails, { "originalEvent": clickEvent}));
+				}
+				else
+				{
+					window.dispatchEvent(new CustomEvent(Menubox.EVENT_ID, { "detail": eventDetails }));
+				};
 			};
 		};
 	};
