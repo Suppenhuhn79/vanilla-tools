@@ -96,13 +96,9 @@ class Menubox
 			let menuboxItem = clickEvent.target.closest("[data-menuitem]");
 			let menuboxButton = clickEvent.target.closest("[data-menubutton]");
 			let menubox = Menubox.instances[clickEvent.target.closest("[data-menubox]").getAttribute("data-menubox")];
-			if ((menubox.selectMode === Menubox.SelectMode.normal) || (menuboxButton))
-			{
-				Menubox.hideAll();
-			};
+			let submenuId = menuboxItem?.getAttribute("data-submenu");
 			if (menuboxItem)
 			{
-				let submenuId = menuboxItem.getAttribute("data-submenu");
 				if (submenuId)
 				{
 					let submenu = menubox.submenus[submenuId];
@@ -111,11 +107,12 @@ class Menubox
 				}
 				else if (menubox.multiselect)
 				{
-					clickEvent.target.classList.toggle("selected");
+					menuboxItem.classList.toggle("selected");
 				};
 			};
-			if ((menubox.selectMode !== Menubox.SelectMode.multiselect) || (menuboxButton))
+			if (((menubox.selectMode === Menubox.SelectMode.normal) || (menuboxButton)) && (!submenuId))
 			{
+				Menubox.hideAll();
 				/* dispatch event */
 				let eventDetails =
 				{
@@ -227,8 +224,8 @@ class Menubox
 		else if ((itemDef.html) && (!itemDef.key))
 		{
 			itemElement = itemDef.html;
-		}
-		else
+		};
+		if (itemDef.key)
 		{
 			itemElement = htmlBuilder.newElement("div.menuitem", 
 				{
