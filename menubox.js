@@ -220,13 +220,13 @@ class Menubox
 		{
 			itemElement = htmlBuilder.newElement("div.separator", "\u00a0");
 		}
-		else if (itemDef.html)
-		{
-			itemElement = itemDef.html;
-		}
 		else if (itemDef.href)
 		{
 			itemElement = htmlBuilder.newElement("a.menuitem", {href: itemDef.href}, itemDef.label ?? itemDef.href);
+		}
+		else if ((itemDef.html) && (!itemDef.key))
+		{
+			itemElement = itemDef.html;
 		}
 		else
 		{
@@ -234,7 +234,7 @@ class Menubox
 				{
 					'data-menuitem': itemDef.key,
 					onclick: itemDef.onclick ?? Menubox.onMenuItemClick
-				}, itemDef.label ?? ((itemDef.input) ? "" : itemDef.key)
+				}, itemDef.html ?? itemDef.label ?? ((itemDef.input) ? "" : itemDef.key)
 			);
 			if (itemDef.input)
 			{
