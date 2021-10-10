@@ -20,12 +20,10 @@ class Menubox
 		};
 		this.eventHandler = eventHandler;
 		this.parentMenubox = _parentMenubox;
-		this.selectMode = menuJson.selectMode ?? ((menuJson.multiselect === true) ? Menubox.SelectMode.multiselect : Menubox.SelectMode.normal);
-		this.multiselect = ([Menubox.SelectMode.multiselect, Menubox.SelectMode.multiselect_interactive].includes(this.selectMode));
-		this.adjust = Object.assign(
-		{
-			visibility: ["hidden", "visible"]
-		}, menuJson.adjust);
+		this.selectMode = menuJson.selectMode ?? ((menuJson.multiselect === true) ? Menubox.SELECT_MODE.multiselect : Menubox.SELECT_MODE.normal);
+		this.multiselect = ([Menubox.SELECT_MODE.multiselect, Menubox.SELECT_MODE.multiselect_interactive].includes(this.selectMode));
+		this.items = {};
+		this.adjust = Object.assign({ visibility: ["hidden", "visible"] }, menuJson.adjust);
 		this.element = htmlBuilder.newElement("div.menubox",
 		{
 			'data-menubox': id,
@@ -63,12 +61,12 @@ class Menubox
 		};
 		document.body.appendChild(this.element);
 		Menubox.instances[this.id] = this;
-		Menubox.hideAll();
+		Menubox.closeAll();
 	};
 
 	static EVENT_ID = "menubox";
 
-	static SelectMode = {
+	static SELECT_MODE = {
 		normal: 0,
 		persistent: 1,
 		multiselect: 2,
@@ -79,11 +77,17 @@ class Menubox
 
 	static hideAll(exceptFor = "")
 	{
+		console.warn("Menubox.hideAll() is deprecated and will be removed in the next release. Use Menubox.closeAll() instead.");
+		Menubox.closeAll(exceptFor);
+	};
+	
+	static closeAll(exceptFor = "")
+	{
 		for (let key in Menubox.instances)
 		{
 			if (exceptFor.startsWith(key) === false)
 			{
-				Menubox.instances[key].setVisibility(false);
+				Menubox.instances[key].close();
 			}
 		};
 	};
@@ -102,7 +106,7 @@ class Menubox
 				if (submenuId)
 				{
 					let submenu = menubox.submenus[submenuId];
-					Menubox.hideAll(submenuId);
+					Menubox.closeAll(submenuId);
 					submenu.popup(clickEvent, menubox.context, menuboxItem, submenu.alignment);
 				}
 				else if (menubox.multiselect)
@@ -110,9 +114,12 @@ class Menubox
 					menuboxItem.classList.toggle("selected");
 				};
 			};
-			if (((menubox.selectMode === Menubox.SelectMode.normal) || (menuboxButton)) && (!submenuId))
+			if (((menubox.selectMode === Menubox.SELECT_MODE.normal) || (menuboxButton)) && (!submenuId))
 			{
-				Menubox.hideAll();
+				Menubox.closeAll();
+			};
+			if ((menubox.selectMode !== Menubox.SELECT_MODE.multiselect) || (menuboxButton))
+			{
 				/* dispatch event */
 				let eventDetails =
 				{
@@ -146,7 +153,7 @@ class Menubox
 		};
 	};
 
-	setVisibility(visible)
+	_setVisibility(visible)
 	{
 		let styleIndex = (visible) ? 1 : 0;
 		for (let key in this.adjust)
@@ -166,8 +173,8 @@ class Menubox
 
 	setItems(itemDefs)
 	{
-		let itemsContainer = this.element.querySelector("div.items");
-		htmlBuilder.removeAllChildren(itemsContainer);
+		this.items = {};
+		htmlBuilder.removeAllChildren(this.element.querySelector("div.items"));
 		if (itemDefs instanceof Array)
 		{
 			for (let itemDef of itemDefs)
@@ -190,6 +197,48 @@ class Menubox
 
 	appendItem(itemDef)
 	{
+		function _createInputElement(itemDef)
+		{
+			let inputElement = htmlBuilder.newElement("input", { type: itemDef.input });
+			for (let itemDefKey in itemDef)
+			{
+				if (["key", "label", "input"].includes(itemDefKey) === false)
+				{
+					inputElement[itemDefKey] = itemDef[itemDefKey];
+				};
+			};
+			return inputElement;
+		};
+		function _createSubmenu(menubox, itemElement, itemDef)
+		{
+			let submenuId = menubox.id + "::" + itemDef.key;
+			itemElement.setAttribute("data-submenu", submenuId);
+			itemElement.classList.add("submenu");
+			menubox.submenus ??= {};
+			menubox.submenus[submenuId] = new Menubox(submenuId, itemDef.submenu, menubox.eventHandler, menubox);
+			menubox.submenus[submenuId].alignment = itemDef.submenu.alignment ?? "start right, below top";
+		};
+		function _appendItemObject(menubox, itemKey, itemElement)
+		{
+			menubox.items[itemKey] =
+			{
+				isSelected: () => itemElement.classList.contains("selected"),
+				setSelected: (selected = true) => {
+					if (menubox.multiselect === false)
+					{
+						for (let item of menubox.element.querySelectorAll("[data-menuitem].selected"))
+						{
+							item.classList.remove("selected");
+						};
+					};
+					(selected) ? itemElement.classList.add("selected") : itemElement.classList.remove("selected");
+				},
+				isEnabled: () => !itemElement.classList.contains("disabled"),
+				setEnabled: (enabled = true) => { (enabled) ? itemElement.classList.remove("disabled") : itemElement.classList.add("disabled"); },
+				setVisible: (visible = true) => { itemElement.style.display = (visible) ? "initial" : "none"; },
+				element: itemElement
+			};
+		};
 		if ((itemDef.key === undefined) && (itemDef.separator === undefined) && (itemDef.html === undefined))
 		{
 			for (let key in itemDef)
@@ -219,77 +268,66 @@ class Menubox
 		}
 		else if (itemDef.href)
 		{
-			itemElement = htmlBuilder.newElement("a.menuitem", {href: itemDef.href}, itemDef.label ?? itemDef.href);
+			itemElement = htmlBuilder.newElement("a.menuitem", { href: itemDef.href }, itemDef.label ?? itemDef.href);
 		}
 		else if ((itemDef.html) && (!itemDef.key))
 		{
 			itemElement = itemDef.html;
-		};
-		if (itemDef.key)
+		}
+		else if (itemDef.key)
 		{
-			itemElement = htmlBuilder.newElement("div.menuitem", 
+			if (!this.items[itemDef.key])
+			{
+				itemElement = htmlBuilder.newElement("div.menuitem",
 				{
 					'data-menuitem': itemDef.key,
 					onclick: itemDef.onclick ?? Menubox.onMenuItemClick
-				}, itemDef.html ?? itemDef.label ?? ((itemDef.input) ? "" : itemDef.key)
-			);
-			if (itemDef.input)
-			{
-				let inputElement = htmlBuilder.newElement("input", {type: itemDef.input});
-				for (let itemDefKey in itemDef)
+				}, itemDef.html ?? itemDef.label ?? ((itemDef.input) ? "" : itemDef.key));
+				if (itemDef.input)
 				{
-					if (["key", "label", "input"].includes(itemDefKey) === false)
-					{
-						console.log("adding", itemDefKey);
-						inputElement[itemDefKey] = itemDef[itemDefKey];
-					};
+					itemElement.appendChild(_createInputElement(itemDef));
+				}
+				else if (itemDef.submenu)
+				{
+					_createSubmenu(this, itemElement, itemDef);
+				}
+				else if (this.multiselect)
+				{
+					itemElement.classList.add("multiselect");
 				};
-				itemElement.appendChild(inputElement);
+				_appendItemObject(this, itemDef.key, itemElement);
 			}
-			else if (itemDef.submenu)
+			else
 			{
-				let submenuId = this.id + "::" + itemDef.key;
-				itemElement.setAttribute("data-submenu", submenuId);
-				itemElement.classList.add("submenu");
-				this.submenus ??= {};
-				this.submenus[submenuId] = new Menubox(submenuId, itemDef.submenu, this.eventHandler, this);
-				this.submenus[submenuId].alignment = itemDef.submenu.alignment ?? "start right, below top";
-			}
-			else if (this.multiselect)
-			{
-				itemElement.classList.add("multiselect");
+				console.warn("Menubox item \"" + itemDef.key + "\" does already exist.", this, itemDef);
 			};
 		};
-		if (itemDef.icon)
+		if (itemElement)
 		{
-			itemElement.insertBefore(htmlBuilder.newElement("img", { src: itemDef.icon }), itemElement.firstChild);
+			if (itemDef.icon)
+			{
+				itemElement.insertBefore(htmlBuilder.newElement("img", { src: itemDef.icon }), itemElement.firstChild);
+			};
+			if (itemDef.iconFontAwesome)
+			{
+				itemElement.insertBefore(htmlBuilder.newElement("i." + itemDef.iconFontAwesome.replace(" ", ".")), itemElement.firstChild);
+			};
+			if (itemDef.selected)
+			{
+				itemElement.classList.add("selected");
+			};
+			if (itemDef.enabled === false)
+			{
+				itemElement.classList.add("disabled");
+			};
+			this.element.querySelector("div.items").appendChild(itemElement);
 		};
-		if (itemDef.iconFontAwesome)
-		{
-			itemElement.insertBefore(htmlBuilder.newElement("i." + itemDef.iconFontAwesome.replace(" ", ".")), itemElement.firstChild);
-		};
-		if (itemDef.selected)
-		{
-			itemElement.classList.add("selected");
-		};
-		if (itemDef.enabled === false)
-		{
-			itemElement.classList.add("disabled");
-		};
-		this.element.querySelector("div.items").appendChild(itemElement);
 	};
 
 	selectItem(itemKey, beSelected = true)
 	{
-		if (this.multiselect === false)
-		{
-			for (let item of this.element.querySelectorAll("[data-menuitem]"))
-			{
-				item.classList.remove("selected");
-			};
-		};
-		let selectedItem = this.element.querySelector("[data-menuitem=\"" + itemKey + "\"]");
-		(beSelected) ? selectedItem?.classList.add("selected") : selectedItem?.classList.remove("selected");
+		console.warn("<menubox>.selectItem() is deprecated and will be removed in the next release. Use <menubox>.items.<itemkey>.setSelected() instead.");
+		this.items[itemKey].setSelected(beSelected);
 	};
 
 	setTitle(title)
@@ -315,7 +353,7 @@ class Menubox
 	{
 		if (!this.parentMenubox)
 		{
-			Menubox.hideAll();
+			Menubox.closeAll();
 		};
 		if (clickEvent instanceof MouseEvent)
 		{
@@ -331,9 +369,19 @@ class Menubox
 			htmlBuilder.adjust(this.element, anchorElement, adjustment);
 		};
 		this.context = context;
-		this.setVisibility(true);
+		this._setVisibility(true);
+	};
+	
+	close()
+	{
+		this._setVisibility(false);
 	};
 
 };
 
-window.addEventListener("click", (clickEvent) => ((clickEvent.target.closest("[data-menubox]") === null) ? Menubox.hideAll() : null));
+window.addEventListener("click", (clickEvent) => {
+	if (clickEvent.target.closest("[data-menubox]") === null)
+	{
+		Menubox.closeAll();
+	};
+});
