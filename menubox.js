@@ -197,16 +197,21 @@ class Menubox
 
 	appendItem(itemDef)
 	{
-		function _createInputElement(itemDef)
+		function _copyProperties(itemDef, itemElement)
 		{
-			let inputElement = htmlBuilder.newElement("input", { type: itemDef.input });
 			for (let itemDefKey in itemDef)
 			{
 				if (["key", "label", "input"].includes(itemDefKey) === false)
 				{
-					inputElement[itemDefKey] = itemDef[itemDefKey];
+					itemElement[itemDefKey] = itemDef[itemDefKey];
 				};
 			};
+			
+		};
+		function _createInputElement(itemDef)
+		{
+			let inputElement = htmlBuilder.newElement("input", { type: itemDef.input });
+			_copyProperties(itemDef, inputElement);
 			return inputElement;
 		};
 		function _createSubmenu(menubox, itemElement, itemDef)
@@ -239,7 +244,7 @@ class Menubox
 				element: itemElement
 			};
 		};
-		if ((itemDef.key === undefined) && (itemDef.separator === undefined) && (itemDef.html === undefined))
+		if ((itemDef.key === undefined) && (itemDef.separator === undefined) && (itemDef.html === undefined) && (itemDef.href === undefined))
 		{
 			for (let key in itemDef)
 			{
@@ -268,7 +273,8 @@ class Menubox
 		}
 		else if (itemDef.href)
 		{
-			itemElement = htmlBuilder.newElement("a.menuitem", { href: itemDef.href }, itemDef.label ?? itemDef.href);
+			itemElement = htmlBuilder.newElement("a.menuitem", itemDef.label ?? itemDef.href);
+			_copyProperties(itemDef, itemElement);
 		}
 		else if ((itemDef.html) && (!itemDef.key))
 		{
