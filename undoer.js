@@ -27,13 +27,11 @@ class Undoer
 	{
 		if ((this.snapshots.length === 0) || (data !== this.snapshots[this.snapshots.length - 1].data))
 		{
-			this.snapshots.push(
-			{
+			this.snapshots.push({
 				"data": data,
 				"description": description
-			}
-			);
-		};
+			});
+		}
 	};
 
 	undo()
@@ -43,7 +41,7 @@ class Undoer
 		{
 			result = String(this.snapshots[this.snapshots.length - 1].data);
 			this.snapshots.pop();
-		};
+		}
 		return result;
 	};
 

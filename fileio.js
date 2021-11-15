@@ -12,17 +12,13 @@ fileIo.offerFileToClient = function (filename, data, type = "text/plain")
 {
 	let anchorNode = document.createElement("a");
 	anchorNode.style.display = "none";
-	let file = new Blob([data],
-	{
-		"type": type
-	}
-		);
+	let file = new Blob([data], {"type": type});
 	anchorNode.href = URL.createObjectURL(file);
 	anchorNode.download = String(filename).replace(/[^a-z0-9\s\-_.]/ig, "");
 	document.body.appendChild(anchorNode);
 	anchorNode.click();
 	anchorNode.remove();
-};
+}
 
 fileIo.requestClientFile = function (clickEvent)
 {
@@ -41,9 +37,8 @@ fileIo.requestClientFile = function (clickEvent)
 		document.body.appendChild(inputNode);
 		inputNode.click();
 		inputNode.remove();
-	}
-	);
-};
+	});
+}
 
 fileIo.fetchServerFile = function (url, autoRecognizeDataType = true)
 {
@@ -75,18 +70,17 @@ fileIo.fetchServerFile = function (url, autoRecognizeDataType = true)
 							case "xml":
 								result = new DOMParser().parseFromString(result, "text/xml");
 								break;
-							};
-						};
+							}
+						}
 					}
 					catch (ex)
 					{
 						reject(new SyntaxError(ex.message));
 					}
-				};
-			};
+				}
+			}
 			resolve(result);
-		};
+		}
 		httpRequest.send();
-	}
-	);
-};
+	});
+}

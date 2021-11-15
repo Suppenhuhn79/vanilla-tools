@@ -19,7 +19,7 @@ storager.store = function (key, title, data)
 			"date": new Date().toISOString()
 		};
 		localStorage.setItem(key, JSON.stringify(storeData));
-	};
+	}
 };
 
 storager.retrieve = function (key)
@@ -32,7 +32,7 @@ storager.retrieve = function (key)
 		if (!!storedData)
 		{
 			result["date"] = new Date(storedData.date);
-		};
-	};
+		}
+	}
 	return result;
 };

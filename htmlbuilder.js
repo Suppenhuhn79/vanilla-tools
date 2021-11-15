@@ -38,7 +38,7 @@ htmlBuilder.adjust = function (element, anchorElement, adjustment = "below botto
 	{
 		position.y += document.documentElement.scrollTop;
 		position.x += document.documentElement.scrollLeft;
-	};
+	}
 	/* set position */
 	element.style.top = Math.round(position.y) + "px";
 	element.style.left = Math.round(position.x) + "px";
@@ -55,14 +55,14 @@ htmlBuilder.newElement = function (elementDefinition, ...content)
 	while (attributesMatch = attributesRex.exec(elementDefinition))
 	{
 		result.setAttribute(attributesMatch[1], attributesMatch[3]);
-	};
+	}
 	elementDefinition = /[^\[]+/.exec(elementDefinition);
 	let cssClassesRex = /\.([^.\s]+)/g,
 	cssClassMatch;
 	while (cssClassMatch = cssClassesRex.exec(elementDefinition))
 	{
 		result.classList.add(cssClassMatch[1]);
-	};
+	}
 	for (let item of content)
 	{
 		switch (item.constructor.name)
@@ -82,8 +82,8 @@ htmlBuilder.newElement = function (elementDefinition, ...content)
 				else
 				{
 					result.setAttribute(key, value);
-				};
-			};
+				}
+			}
 			break;
 		default:
 			if (item instanceof HTMLElement)
@@ -93,9 +93,9 @@ htmlBuilder.newElement = function (elementDefinition, ...content)
 			else
 			{
 				throw new TypeError("Expected String, Number, Object or HTMLElement, got " + ((!!item) ? item.constructor.name : typeof item));
-			};
-		};
-	};
+			}
+		}
+	}
 	return result;
 };
 
@@ -106,8 +106,8 @@ htmlBuilder.removeChildrenByQuerySelectors = function (querySelectors, rootEleme
 		for (let node of rootElement.querySelectorAll(querySelector))
 		{
 			node.remove();
-		};
-	};
+		}
+	}
 };
 
 htmlBuilder.removeClasses = function (classes, rootElement = document.body)
@@ -118,8 +118,8 @@ htmlBuilder.removeClasses = function (classes, rootElement = document.body)
 		for (let node of rootElement.querySelectorAll("." + clss))
 		{
 			node.classList.remove(clss);
-		};
-	};
+		}
+	}
 };
 
 htmlBuilder.removeAllChildren = function (element)
@@ -127,7 +127,7 @@ htmlBuilder.removeAllChildren = function (element)
 	while (element.firstChild)
 	{
 		element.firstChild.remove();
-	};
+	}
 };
 
 htmlBuilder.dataFromElements = function (object, rootElement)
@@ -139,18 +139,18 @@ htmlBuilder.dataFromElements = function (object, rootElement)
 			if (!!object[path[0]])
 			{
 				_processPath(object[path[0]], path.slice(1), value);
-			};
+			}
 		}
 		else
 		{
 			object[path[0]] = value;
-		};
+		}
 	};
 	for (let mappedElement of rootElement.querySelectorAll("[data-value-key]"))
 	{
 		let elementAttribute = mappedElement.getAttribute("data-value-attribute") ?? "value";
 		_processPath(object, mappedElement.getAttribute("data-value-key").split("."), mappedElement[elementAttribute]);
-	};
+	}
 };
 
 htmlBuilder.dataToElements = function (object, rootElement)
@@ -163,17 +163,17 @@ htmlBuilder.dataToElements = function (object, rootElement)
 			if (!!object[path[0]])
 			{
 				result = _processPath(object[path[0]], path.slice(1));
-			};
+			}
 		}
 		else
 		{
 			result = object[path[0]];
-		};
+		}
 		return result;
 	};
 	for (let mappedElement of rootElement.querySelectorAll("[data-value-key]"))
 	{
 		let elementAttribute = mappedElement.getAttribute("data-value-attribute") ?? "value";
 		mappedElement[elementAttribute] = _processPath(object, mappedElement.getAttribute("data-value-key").split("."));
-	};
+	}
 };

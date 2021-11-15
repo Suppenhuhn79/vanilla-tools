@@ -27,7 +27,7 @@ class DidYouKnow
 		if (this.currentHintIndex >= this.hints.length)
 		{
 			this.currentHintIndex = 0;
-		};
+		}
 		this.presentationNode.innerHTML = this.hints[this.currentHintIndex];
 	};
 };

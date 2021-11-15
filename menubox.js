@@ -17,7 +17,7 @@ class Menubox
 		{
 			console.info("Menubox \"" + this.id + "\" already existed, has been replaced.");
 			document.body.querySelector("[data-menubox=\"" + id + "\"]")?.remove();
-		};
+		}
 		this.eventHandler = eventHandler;
 		this.parentMenubox = _parentMenubox;
 		this.selectMode = menuJson.selectMode ?? ((menuJson.multiselect === true) ? Menubox.SELECT_MODE.multiselect : Menubox.SELECT_MODE.normal);
@@ -32,7 +32,7 @@ class Menubox
 		if (_parentMenubox)
 		{
 			this.element.classList.add("submenu");
-		};
+		}
 		this.element.style.position = menuJson.position ?? "absolute";
 		this.element.style.top = "0px";
 		this.element.style.left = "0px";
@@ -41,8 +41,8 @@ class Menubox
 			for (let cssClass of menuJson.css.split(" "))
 			{
 				this.element.classList.add(cssClass);
-			};
-		};
+			}
+		}
 		this.setTitle(menuJson.title);
 		this.setItems((menuJson.items instanceof Array) ? menuJson.items : menuJson);
 		if (menuJson.buttons instanceof Array)
@@ -56,9 +56,9 @@ class Menubox
 						onclick: Menubox.onMenuItemClick
 					},
 					menuButton.label ?? menuButton.key));
-			};
+			}
 			this.element.firstElementChild.appendChild(buttonsContainer);
-		};
+		}
 		document.body.appendChild(this.element);
 		Menubox.instances[this.id] = this;
 		Menubox.closeAll();
@@ -89,7 +89,7 @@ class Menubox
 			{
 				Menubox.instances[key].close();
 			}
-		};
+		}
 	};
 
 	static onMenuItemClick(clickEvent)
@@ -112,12 +112,12 @@ class Menubox
 				else if (menubox.multiselect)
 				{
 					menuboxItem.classList.toggle("selected");
-				};
-			};
+				}
+			}
 			if (((menubox.selectMode === Menubox.SELECT_MODE.normal) || (menuboxButton)) && (!submenuId))
 			{
 				Menubox.closeAll();
-			};
+			}
 			if ((menubox.selectMode !== Menubox.SELECT_MODE.multiselect) || (menuboxButton))
 			{
 				/* dispatch event */
@@ -132,15 +132,15 @@ class Menubox
 				else if (menuboxButton)
 				{
 					eventDetails.buttonKey = menuboxButton.getAttribute("data-menubutton");
-				};
+				}
 				if (menubox.multiselect)
 				{
 					eventDetails.selectedKeys = [];
 					for (let item of menubox.element.querySelectorAll("[data-menuitem].selected"))
 					{
 						eventDetails.selectedKeys.push(item.getAttribute("data-menuitem"));
-					};
-				};
+					}
+				}
 				if (typeof menubox.eventHandler === "function")
 				{
 					menubox.eventHandler(Object.assign(eventDetails, { originalEvent: clickEvent}));
@@ -148,9 +148,9 @@ class Menubox
 				else
 				{
 					window.dispatchEvent(new CustomEvent(Menubox.EVENT_ID, { detail: eventDetails }));
-				};
-			};
-		};
+				}
+			}
+		}
 	};
 
 	_setVisibility(visible)
@@ -166,9 +166,9 @@ class Menubox
 			else if ((key === "width") && (styleValue === "auto"))
 			{
 				styleValue = this.element.firstElementChild.offsetWidth + "px";
-			};
+			}
 			this.element.style[key] = styleValue;
-		};
+		}
 	};
 
 	setItems(itemDefs)
@@ -180,19 +180,17 @@ class Menubox
 			for (let itemDef of itemDefs)
 			{
 				this.appendItem(itemDef);
-			};
+			}
 		}
 		else
 		{
 			for (let key in itemDefs)
 			{
-				this.appendItem(
-				{
+				this.appendItem({
 					[key]: itemDefs[key]
-				}
-				);
-			};
-		};
+				});
+			}
+		}
 	};
 
 	appendItem(itemDef)
@@ -204,9 +202,8 @@ class Menubox
 				if (["key", "label", "input"].includes(itemDefKey) === false)
 				{
 					itemElement[itemDefKey] = itemDef[itemDefKey];
-				};
-			};
-			
+				}
+			}
 		};
 		function _createInputElement(itemDef)
 		{
@@ -234,8 +231,8 @@ class Menubox
 						for (let item of menubox.element.querySelectorAll("[data-menuitem].selected"))
 						{
 							item.classList.remove("selected");
-						};
-					};
+						}
+					}
 					(selected) ? itemElement.classList.add("selected") : itemElement.classList.remove("selected");
 				},
 				isEnabled: () => !itemElement.classList.contains("disabled"),
@@ -261,11 +258,11 @@ class Menubox
 					itemDef =
 					{
 						separator: {}
-					}
-				};
+					};
+				}
 				break;
-			};
-		};
+			}
+		}
 		let itemElement;
 		if (itemDef.separator)
 		{
@@ -300,34 +297,34 @@ class Menubox
 				else if (this.multiselect)
 				{
 					itemElement.classList.add("multiselect");
-				};
+				}
 				_appendItemObject(this, itemDef.key, itemElement);
 			}
 			else
 			{
 				console.warn("Menubox item \"" + itemDef.key + "\" does already exist.", this, itemDef);
-			};
-		};
+			}
+		}
 		if (itemElement)
 		{
 			if (itemDef.icon)
 			{
 				itemElement.insertBefore(htmlBuilder.newElement("img", { src: itemDef.icon }), itemElement.firstChild);
-			};
+			}
 			if (itemDef.iconFontAwesome)
 			{
 				itemElement.insertBefore(htmlBuilder.newElement("i." + itemDef.iconFontAwesome.replace(" ", ".")), itemElement.firstChild);
-			};
+			}
 			if (itemDef.selected)
 			{
 				itemElement.classList.add("selected");
-			};
+			}
 			if (itemDef.enabled === false)
 			{
 				itemElement.classList.add("disabled");
-			};
+			}
 			this.element.querySelector("div.items").appendChild(itemElement);
-		};
+		}
 	};
 
 	selectItem(itemKey, beSelected = true)
@@ -346,13 +343,13 @@ class Menubox
 			{
 				titleElement = htmlBuilder.newElement("div.title");
 				wrapperElement.insertBefore(titleElement, wrapperElement.firstElementChild);
-			};
+			}
 			titleElement.innerText = title;
 		}
 		else
 		{
 			wrapperElement.querySelector(".title")?.remove();
-		};
+		}
 	};
 	
 	popup(clickEvent, context = null, anchorElement = null, adjustment = "start left, below bottom")
@@ -360,7 +357,7 @@ class Menubox
 		if (!this.parentMenubox)
 		{
 			Menubox.closeAll();
-		};
+		}
 		if (clickEvent instanceof MouseEvent)
 		{
 			clickEvent.stopPropagation();
@@ -368,12 +365,12 @@ class Menubox
 			{
 				this.element.style.top = clickEvent.clientY + document.documentElement.scrollTop + "px";
 				this.element.style.left = clickEvent.clientX + document.documentElement.scrollLeft + "px";
-			};
-		};
+			}
+		}
 		if (anchorElement instanceof HTMLElement)
 		{
 			htmlBuilder.adjust(this.element, anchorElement, adjustment);
-		};
+		}
 		this.context = context;
 		this._setVisibility(true);
 	};
@@ -389,5 +386,5 @@ window.addEventListener("click", (clickEvent) => {
 	if (clickEvent.target.closest("[data-menubox]") === null)
 	{
 		Menubox.closeAll();
-	};
+	}
 });
