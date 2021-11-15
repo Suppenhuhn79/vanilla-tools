@@ -273,7 +273,7 @@ class Menubox
 		}
 		else if (itemDef.href)
 		{
-			itemElement = htmlBuilder.newElement("a.menuitem", itemDef.label ?? itemDef.href);
+			itemElement = htmlBuilder.newElement("a.menuitem", itemDef.label ?? itemDef.href, {onclick: (evt) => Menubox.closeAll()});
 			_copyProperties(itemDef, itemElement);
 		}
 		else if ((itemDef.html) && (!itemDef.key))
