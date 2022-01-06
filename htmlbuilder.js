@@ -99,6 +99,12 @@ htmlBuilder.newElement = function (elementDefinition, ...content)
 	return result;
 };
 
+htmlBuilder.replaceContent = function (element, newContentElement)
+{
+	htmlBuilder.removeAllChildren(element);
+	element.appendChild(newContentElement);
+};
+
 htmlBuilder.removeChildrenByQuerySelectors = function (querySelectors, rootElement = document.body)
 {
 	for (let querySelector of querySelectors)
