@@ -99,6 +99,11 @@ htmlBuilder.newElement = function (elementDefinition, ...content)
 	return result;
 };
 
+htmlBuilder.replaceElement = function (element, newElement)
+{
+	element.parentElement.replaceChild(newElement, element);
+};
+
 htmlBuilder.replaceContent = function (element, newContentElement)
 {
 	htmlBuilder.removeAllChildren(element);
