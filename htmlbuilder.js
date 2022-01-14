@@ -102,6 +102,7 @@ htmlBuilder.newElement = function (elementDefinition, ...content)
 htmlBuilder.replaceElement = function (element, newElement)
 {
 	element.parentElement.replaceChild(newElement, element);
+	return newElement;
 };
 
 htmlBuilder.replaceContent = function (element, newContentElement)
