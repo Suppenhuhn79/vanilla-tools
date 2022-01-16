@@ -146,18 +146,17 @@ htmlBuilder.dataFromElements = function (object, rootElement)
 {
 	function _processPath(object, path, value)
 	{
+		console.log(Object.assign({}, object), path, value);
 		if (path.length > 1)
 		{
-			if (!!object[path[0]])
-			{
-				_processPath(object[path[0]], path.slice(1), value);
-			}
+			object[path[0]] ??= {};
+			_processPath(object[path[0]], path.slice(1), value);
 		}
 		else
 		{
 			object[path[0]] = value;
 		}
-	};
+	}
 	for (let mappedElement of rootElement.querySelectorAll("[data-value-key]"))
 	{
 		let elementAttribute = mappedElement.getAttribute("data-value-attribute") ?? "value";
@@ -182,7 +181,7 @@ htmlBuilder.dataToElements = function (object, rootElement)
 			result = object[path[0]];
 		}
 		return result;
-	};
+	}
 	for (let mappedElement of rootElement.querySelectorAll("[data-value-key]"))
 	{
 		let elementAttribute = mappedElement.getAttribute("data-value-attribute") ?? "value";
