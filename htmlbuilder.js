@@ -144,23 +144,26 @@ htmlBuilder.removeAllChildren = function (element)
 
 htmlBuilder.dataFromElements = function (object, rootElement)
 {
-	function _processPath(object, path, value)
+	function _processPath(object, path, value, valueType = "string")
 	{
-		console.log(Object.assign({}, object), path, value);
 		if (path.length > 1)
 		{
 			object[path[0]] ??= {};
-			_processPath(object[path[0]], path.slice(1), value);
+			_processPath(object[path[0]], path.slice(1), value, valueType);
 		}
 		else
 		{
+			if (valueType === "number")
+			{
+				value = Number(value);
+			}
 			object[path[0]] = value;
 		}
 	}
 	for (let mappedElement of rootElement.querySelectorAll("[data-value-key]"))
 	{
 		let elementAttribute = mappedElement.getAttribute("data-value-attribute") ?? "value";
-		_processPath(object, mappedElement.getAttribute("data-value-key").split("."), mappedElement[elementAttribute]);
+		_processPath(object, mappedElement.getAttribute("data-value-key").split("."), mappedElement[elementAttribute], mappedElement.getAttribute("data-value-type"));
 	}
 };
 
