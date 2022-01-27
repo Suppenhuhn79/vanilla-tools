@@ -224,6 +224,7 @@ class Menubox
 		{
 			menubox.items[itemKey] =
 			{
+				label: itemDef.label,
 				isSelected: () => itemElement.classList.contains("selected"),
 				setSelected: (selected = true) => {
 					if (menubox.multiselect === false)
