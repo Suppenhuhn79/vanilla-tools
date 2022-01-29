@@ -12,14 +12,15 @@ htmlBuilder.adjust = function (element, anchorElement, adjustment = "below botto
 {
 	/* initial position: "start left, top below" */
 	let anchorRect = anchorElement.getBoundingClientRect();
-	let position = {};
+	let position = {
+		x: (!!/\bright\b/i.exec(adjustment)) ? anchorRect.right : anchorRect.left,
+		y: (!!/\bbottom\b/i.exec(adjustment)) ? anchorRect.bottom : anchorRect.top
+	};
 	let elementPositionIsFixed = (window.getComputedStyle(element).position === "fixed");
 	/* horizontal adjustment */
-	position.x = (!!/\bright\b/i.exec(adjustment)) ? anchorRect.right : anchorRect.left;
 	position.x -= (!!/\bend\b/i.exec(adjustment)) ? element.offsetWidth : 0;
 	position.x += (!!/\bcenter\b/i.exec(adjustment)) ? ((anchorRect.width - element.offsetWidth) / 2) : 0;
 	/* vertical adjustment */
-	position.y = (!!/\bbottom\b/i.exec(adjustment)) ? anchorRect.bottom : anchorRect.top;
 	position.y -= (!!/\babove\b/i.exec(adjustment)) ? element.offsetHeight : 0;
 	position.y += (!!/\bmiddle\b/i.exec(adjustment)) ? ((anchorRect.height - element.offsetHeight) / 2) : 0;
 	/* prevent exceeding the docment client area */
@@ -119,6 +120,14 @@ htmlBuilder.removeChildrenByQuerySelectors = function (querySelectors, rootEleme
 		{
 			node.remove();
 		}
+	}
+};
+
+htmlBuilder.styleElement = function (element, styles)
+{
+	for (let styleKey in styles)
+	{
+		element.style[styleKey] = styles[styleKey];
 	}
 };
 
