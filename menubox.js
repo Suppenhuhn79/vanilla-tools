@@ -1,5 +1,3 @@
-"use strict";
-
 /*
 This is a file from Vanilla-Tools (https://github.com/suppenhuhn79/vanilla-tools)
 Copyright 2021 Christoph Zager, licensed under the Apache License, Version 2.0
@@ -12,6 +10,10 @@ class Menubox
 {
 	constructor(id, menuJson, eventHandler = null, _parentMenubox = null)
 	{
+		if (typeof id !== "string")
+		{
+			throw new TypeError("ID required (as string)");
+		}
 		this.id = id;
 		if (Menubox.instances[this.id])
 		{
@@ -33,9 +35,11 @@ class Menubox
 		{
 			this.element.classList.add("submenu");
 		}
-		this.element.style.position = menuJson.position ?? "absolute";
-		this.element.style.top = "0px";
-		this.element.style.left = "0px";
+		htmlBuilder.styleElement(this.element, {
+			position: menuJson.position ?? "absolute",
+			top: "0px",
+			left: "0px"
+		});
 		if (typeof menuJson.css === "string")
 		{
 			for (let cssClass of menuJson.css.split(" "))
@@ -72,7 +76,7 @@ class Menubox
 		multiselect: 2,
 		multiselect_interactive: 3
 	};
-	
+
 	static instances = {};
 
 	static hideAll(exceptFor = "")
@@ -80,7 +84,7 @@ class Menubox
 		console.warn("Menubox.hideAll() is deprecated and will be removed in the next release. Use Menubox.closeAll() instead.");
 		Menubox.closeAll(exceptFor);
 	};
-	
+
 	static closeAll(exceptFor = "")
 	{
 		for (let key in Menubox.instances)
@@ -351,35 +355,105 @@ class Menubox
 			wrapperElement.querySelector(".title")?.remove();
 		}
 	};
-	
+
 	popup(clickEvent, context = null, anchorElement = null, adjustment = "start left, below bottom")
 	{
 		if (!this.parentMenubox)
 		{
 			Menubox.closeAll();
 		}
+		let itemsElement = this.element.querySelector("div.items");
+		let isFixed = (this.element.style.position === "fixed");
+		let scrollPos = (isFixed) ? {top: 0, left: 0} : {top: document.documentElement.scrollTop, left: document.documentElement.scrollLeft};
+		itemsElement.scrollTo({top: 0});
+		htmlBuilder.styleElement(itemsElement, {
+			height: null,
+			overflowY: null
+		});
 		if (clickEvent instanceof MouseEvent)
 		{
 			clickEvent.stopPropagation();
 			if ((anchorElement instanceof HTMLElement) === false)
 			{
-				this.element.style.top = clickEvent.clientY + document.documentElement.scrollTop + "px";
-				this.element.style.left = clickEvent.clientX + document.documentElement.scrollLeft + "px";
+				htmlBuilder.styleElement(this.element, {
+					top: clickEvent.clientY + scrollPos.top + "px",
+					left: clickEvent.clientX + scrollPos.left + "px"
+				});
 			}
 		}
 		if (anchorElement instanceof HTMLElement)
 		{
 			htmlBuilder.adjust(this.element, anchorElement, adjustment);
 		}
+		/* prevent menubox exceeds viewport */
+		let elementRect = this.element.getBoundingClientRect();
+		if (elementRect.right > window.innerWidth)
+		{
+			this.element.style.left = Math.round(Math.max(scrollPos.left, scrollPos.left + window.innerWidth - elementRect.width)) + "px";
+		}
+		if (elementRect.bottom > window.innerHeight)
+		{
+			this.element.style.top = Math.round(Math.max(scrollPos.top, scrollPos.top + window.innerHeight - elementRect.height)) + "px";
+			if (elementRect.height > window.innerHeight)
+			{
+				itemsElement.style.height = (itemsElement.offsetHeight - (elementRect.height - window.innerHeight)) + "px";
+				itemsElement.style.overflowY = "scroll";
+			}
+		}
 		this.context = context;
 		this._setVisibility(true);
 	};
-	
+
 	close()
 	{
 		this._setVisibility(false);
 	};
 
+};
+
+function dialogBox(title, lines, buttons)
+{
+	return new Promise((resolve) =>
+	{
+		/* parse markdown in lines */
+		let items = [];
+		for (let line of lines.split("\n"))
+		{
+			let lineItems = [];
+			while (rexMatch = /(?:([_*]{2})(.+?)\1)|\[([^\]]+)\]\(([^)]+)\)/.exec(line))
+			{
+				lineItems.push(line.substr(0, line.indexOf(rexMatch[0])));
+				if (rexMatch[1] === "**")
+				{
+					lineItems.push(htmlBuilder.newElement("em", rexMatch[2]));
+				}
+				else if (rexMatch[1] === "__")
+				{
+					lineItems.push(htmlBuilder.newElement("i", rexMatch[2]));
+				}
+				else if (!!rexMatch[3])
+				{
+					lineItems.push(htmlBuilder.newElement("a", {href: rexMatch[3], target: "_blank"}, rexMatch[4]));
+				}
+				line = line.substring(line.indexOf(rexMatch[0]) + rexMatch[0].length);
+			}
+			lineItems.push(line);
+			items.push({html: htmlBuilder.newElement("p", ...lineItems)});
+		}
+		/* fake Menubox as dialogbox */
+		let dialogBox = new Menubox("__dialogbox__", {position: "fixed", css: "dialogbox", title: title, items: items, buttons: buttons},
+			(menuboxEvent) =>
+			{
+				resolve(menuboxEvent.buttonKey);
+			}
+		);
+		let boxRect = dialogBox.element.getBoundingClientRect();
+		htmlBuilder.styleElement(dialogBox.element, {
+			top: Math.round((window.innerHeight - boxRect.height) / 2) + "px",
+			left: Math.round((window.innerWidth - boxRect.width) / 2) + "px"
+		});
+		dialogBox.popup(null);
+	});
 };
 
 window.addEventListener("click", (clickEvent) => {
