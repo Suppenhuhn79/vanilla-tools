@@ -278,11 +278,11 @@ class Menubox
 			itemElement = htmlBuilder.newElement("a.menuitem", itemDef.label ?? itemDef.href, {onclick: (evt) => Menubox.closeAll()});
 			_copyProperties(itemDef, itemElement);
 		}
-		else if ((itemDef.html) && (!itemDef.key))
+		else if ((itemDef.html) && (itemDef.key === undefined))
 		{
 			itemElement = itemDef.html;
 		}
-		else if (itemDef.key)
+		else if (itemDef.key !== undefined)
 		{
 			if (!this.items[itemDef.key])
 			{
