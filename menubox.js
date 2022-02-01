@@ -323,7 +323,6 @@ class Menubox
 
 	selectItem(itemKey, beSelected = true)
 	{
-		console.warn("<menubox>.selectItem() is deprecated and will be removed in the next release. Use <menubox>.items.<itemkey>.selected instead.");
 		this.items[itemKey].selected = beSelected;
 	};
 
@@ -440,7 +439,7 @@ class Menubox
 			);
 			let boxRect = dialogBox.element.getBoundingClientRect();
 			htmlBuilder.styleElement(dialogBox.element, {
-				top: Math.round((window.innerHeight - boxRect.height) / 2) + "px",
+				top: Math.round((window.innerHeight - boxRect.height) / 3) + "px",
 				left: Math.round((window.innerWidth - boxRect.width) / 2) + "px"
 			});
 			dialogBox.popup(null);
