@@ -93,14 +93,14 @@ class Menubox
 		}
 	};
 
-	static onMenuItemClick(clickEvent)
+	static onMenuItemClick(mouseEvent)
 	{
-		clickEvent.stopPropagation();
-		if ((clickEvent.target instanceof HTMLInputElement === false) && (clickEvent.target.classList.contains("disabled") === false))
+		mouseEvent.stopPropagation();
+		if ((mouseEvent.target instanceof HTMLInputElement === false) && (mouseEvent.target.classList.contains("disabled") === false))
 		{
-			let menuboxItem = clickEvent.target.closest("[data-menuitem]");
-			let menuboxButton = clickEvent.target.closest("[data-menubutton]");
-			let menubox = Menubox.instances[clickEvent.target.closest("[data-menubox]").getAttribute("data-menubox")];
+			let menuboxItem = mouseEvent.target.closest("[data-menuitem]");
+			let menuboxButton = mouseEvent.target.closest("[data-menubutton]");
+			let menubox = Menubox.instances[mouseEvent.target.closest("[data-menubox]").getAttribute("data-menubox")];
 			let submenuId = menuboxItem?.getAttribute("data-submenu");
 			if (menuboxItem)
 			{
@@ -108,7 +108,7 @@ class Menubox
 				{
 					let submenu = menubox.submenus[submenuId];
 					Menubox.closeAll(submenuId);
-					submenu.popup(clickEvent, menubox.context, menuboxItem, submenu.alignment);
+					submenu.popup(mouseEvent, menubox.context, menuboxItem, submenu.alignment);
 				}
 				else if (menubox.multiselect)
 				{
@@ -144,7 +144,7 @@ class Menubox
 				}
 				if (typeof menubox.eventHandler === "function")
 				{
-					menubox.eventHandler(Object.assign(eventDetails, {originalEvent: clickEvent}));
+					menubox.eventHandler(Object.assign(eventDetails, {originalEvent: mouseEvent}));
 				}
 				else
 				{
@@ -345,7 +345,7 @@ class Menubox
 		}
 	};
 
-	popup(clickEvent, context = null, anchorElement = null, adjustment = "start left, below bottom")
+	popup(mouseEvent, context = null, anchorElement = null, adjustment = "start left, below bottom")
 	{
 		if (!this.parentMenubox)
 		{
@@ -359,14 +359,14 @@ class Menubox
 			height: null,
 			overflowY: null
 		});
-		if (clickEvent instanceof MouseEvent)
+		if (mouseEvent instanceof MouseEvent)
 		{
-			clickEvent.stopPropagation();
+			mouseEvent.stopPropagation();
 			if ((anchorElement instanceof HTMLElement) === false)
 			{
 				htmlBuilder.styleElement(this.element, {
-					top: clickEvent.clientY + scrollPos.top + "px",
-					left: clickEvent.clientX + scrollPos.left + "px"
+					top: mouseEvent.clientY + scrollPos.top + "px",
+					left: mouseEvent.clientX + scrollPos.left + "px"
 				});
 			}
 		}
@@ -448,8 +448,14 @@ class Menubox
 
 };
 
-window.addEventListener("click", (clickEvent) => {
-	if (clickEvent.target.closest("[data-menubox]") === null)
+window.addEventListener("click", (mouseEvent) => {
+	if (mouseEvent.target.closest("[data-menubox]") === null)
+	{
+		Menubox.closeAll();
+	}
+});
+window.addEventListener("keydown", (keyEvent) => {
+	if (keyEvent.keyCode === 27)
 	{
 		Menubox.closeAll();
 	}
