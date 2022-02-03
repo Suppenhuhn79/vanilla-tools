@@ -1,5 +1,3 @@
-"use strict";
-
 /*
 This is a file from Vanilla-Tools (https://github.com/suppenhuhn79/vanilla-tools)
 Copyright 2021 Christoph Zager, licensed under the Apache License, Version 2.0
@@ -68,9 +66,11 @@ htmlBuilder.newElement = function (elementDefinition, ...content)
 	{
 		switch (item.constructor.name)
 		{
-		case "String":
 		case "Number":
 			result.appendChild(document.createTextNode(item));
+			break;
+		case "String":
+			result.appendChild(document.createTextNode(unescape(JSON.parse('"' + item.replaceAll(/&#x([0-9a-f]{4});/gi, "\\u$1") + '"'))));
 			break;
 		case "Object":
 			for (let key in item)
