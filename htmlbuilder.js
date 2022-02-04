@@ -70,7 +70,7 @@ htmlBuilder.newElement = function (elementDefinition, ...content)
 			result.appendChild(document.createTextNode(item));
 			break;
 		case "String":
-			result.appendChild(document.createTextNode(unescape(JSON.parse('"' + item.replaceAll(/&#x([0-9a-f]{4});/gi, "\\u$1") + '"'))));
+			result.appendChild(document.createTextNode(unescape((item.includes("&#x")) ? JSON.parse('"' + item.replaceAll(/&#x([0-9a-f]{4});/gi, "\\u$1") + '"') : item)));
 			break;
 		case "Object":
 			for (let key in item)
