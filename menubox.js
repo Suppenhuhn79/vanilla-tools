@@ -305,8 +305,13 @@ class Menubox
 			{
 				itemElement.insertBefore(htmlBuilder.newElement("img", { src: itemDef.icon }), itemElement.firstChild);
 			}
-			if (itemDef.iconFontAwesome)
+			else if (itemDef.iconHtml)
 			{
+				itemElement.insertBefore(itemDef.iconHtml, itemElement.firstChild);
+			}
+			else if (itemDef.iconFontAwesome)
+			{
+				console.warn("iconFontAwesome is deprecated.")
 				itemElement.insertBefore(htmlBuilder.newElement("i." + itemDef.iconFontAwesome.replace(" ", ".")), itemElement.firstChild);
 			}
 			if (itemDef.selected)
